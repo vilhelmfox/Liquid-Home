@@ -53,7 +53,7 @@ button{-webkit-transition:opacity .18s ease,-webkit-transform .18s ease;transiti
 <div class="glass"><h2>Forenklet opsætning</h2><p class="muted">Vælg først et af de seks felter på iPad'en, og vælg derefter hvad det skal gøre. Dropdownmenuerne viser dine Home Assistant enheder automatisk.</p>
 <button id="loadEntities" type="button">↻ Hent enheder fra Home Assistant</button><div id="entityStatus" class="muted">Forbind først med den automatisk genererede parringskode ovenfor.</div></div>
 <div class="glass"><div id="status">Opretter forbindelse …</div><div id="slotHint" class="chip">Afventer valg på iPad</div><form id="form"><label for="kind">Hvad skal feltet være?</label><select id="kind"><option value="empty">＋ Tomt</option><option value="clock">🕒 Ur · ingen indstillinger</option><option value="light">💡 Lys · tryk tænd/sluk, hold for lysstyrke og farve</option><option value="switch">🔌 Kontakt · tryk tænd/sluk</option><option value="music">🎵 Musik · tryk afspil/pause, hold for lydstyrke og næste</option><option value="cover">🪟 Gardin · tryk åbn/luk, hold for position</option><option value="sensor">🌡️ Sensor · vis status</option><option value="text">✏️ Tekst</option></select>
-<p class="muted" id="kindHelp">Vælg typen. Liquid Home vælger selv handlingerne.</p><label for="label">Navn</label><input id="label" placeholder="Fx Køkkenlys"><label for="value">Tekst / indhold</label><input id="value" placeholder="Fx Velkommen hjem"><div id="entitySettings"><label for="deviceFilter">Vælg type enhed</label><select id="deviceFilter"><option value="all">Alle enheder</option><option value="light">💡 Lys</option><option value="cover">🪟 Gardiner</option><option value="media_player">♫ Musikafspillere</option><option value="switch">🔌 Kontakter</option><option value="sensor">🌡 Sensorer</option><option value="other">Andre</option></select>
+<p class="muted" id="kindHelp">Vælg typen. Liquid Home vælger selv handlingerne.</p><div id="nameSettings"><label for="label">Navn (valgfrit)</label><input id="label" placeholder="Fx Køkkenlys"></div><div id="textSettings"><label for="value">Tekst / indhold</label><input id="value" placeholder="Fx Velkommen hjem"></div><div id="entitySettings"><label for="deviceFilter">Vælg type enhed</label><select id="deviceFilter"><option value="all">Alle enheder</option><option value="light">💡 Lys</option><option value="cover">🪟 Gardiner</option><option value="media_player">♫ Musikafspillere</option><option value="switch">🔌 Kontakter</option><option value="sensor">🌡 Sensorer</option><option value="other">Andre</option></select>
 <label for="entitySearch">Søg efter enhed</label><input id="entitySearch" type="search" placeholder="Søg på navn eller entity ID, fx køkken" autocomplete="off"><label for="entitySelect">Vælg enhed</label><select id="entitySelect"><option value="">— Vælg fra Home Assistant —</option></select>
 <details><summary class="muted">Avanceret: indtast entity ID selv</summary><input id="entity" autocapitalize="none" autocomplete="off" placeholder="Fx light.koekken"></details></div><div id="legacyActions" style="display:none"><label for="quickAction">Hvad skal feltet gøre?</label><select id="quickAction">
 <option value="toggle">Tænd / sluk lys eller kontakt · Åbn / luk gardin</option>
@@ -144,6 +144,8 @@ function syncQuickAction(){var a=el('quickAction').value;el('mediaOptions').styl
 function updateKindUI(){
  var kind=el('kind').value,needsEntity=['light','switch','music','cover','sensor'].indexOf(kind)>=0;
  el('entitySettings').style.display=needsEntity?'block':'none';
+ el('nameSettings').style.display=(kind==='clock'||kind==='empty')?'none':'block';
+ el('textSettings').style.display=kind==='text'?'block':'none';
  el('deviceFilter').value=kind==='switch'?'switch':kind==='light'?'light':kind==='cover'?'cover':kind==='music'?'media_player':kind==='sensor'?'sensor':'all';
  el('mediaOptions').style.display='none';
  el('legacyActions').style.display='none';
@@ -156,7 +158,7 @@ function inferQuick(w){if(!w)return 'toggle';if(w.type==='music')return 'music';
 el('loadEntities').onclick=refreshEntityList;
 el('deviceFilter').onchange=function(){populateEntitySelect(el('entity').value)};
 el('entitySearch').oninput=function(){populateEntitySelect(el('entity').value)};
-el('entitySelect').onchange=function(){el('entity').value=this.value;};
+el('entitySelect').onchange=function(){el('entity').value=this.value;var o=this.options[this.selectedIndex];if(o&&o.value&&!el('label').value.trim())el('label').value=o.textContent.replace(/ \([^)]*\)$/,'');};
 el('quickAction').onchange=syncQuickAction;
 el('resetSetup').onclick=function(){
  if(!confirm('Vil du nulstille Liquid Home? Alle seks felter, baggrund og regler bliver slettet på iPad’en.'))return;
