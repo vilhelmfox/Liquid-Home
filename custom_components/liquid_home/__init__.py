@@ -33,7 +33,7 @@ ALLOWED_SERVICES = {
     "input_boolean": {"toggle", "turn_on", "turn_off"},
     "scene": {"turn_on"},
     "script": {"turn_on"},
-    "media_player": {"media_play_pause", "media_play", "media_pause", "media_next_track", "media_previous_track", "play_media"},
+    "media_player": {"media_play_pause", "media_play", "media_pause", "media_next_track", "media_previous_track", "play_media", "volume_set"},
 }
 
 
@@ -271,7 +271,7 @@ class DeviceProxy(HomeAssistantView):
             if state:
                 attrs={}
                 if entity.startswith("media_player."):
-                    for k in ("media_title","media_artist","source"):
+                    for k in ("media_title","media_artist","source","entity_picture","volume_level"):
                         attrs[k]=state.attributes.get(k, "")
                 data.append({"entity_id":entity,"state":state.state,"attributes":attrs})
         return as_json(request,data)
@@ -285,13 +285,15 @@ class DeviceProxy(HomeAssistantView):
         domain=data.get("domain","");service=data.get("service","");payload=data.get("data",{})
         if domain not in ALLOWED_SERVICES or service not in ALLOWED_SERVICES[domain]:
             return as_json(request,{"error":"Handlingen er ikke tilladt"},403)
-        if not isinstance(payload,dict) or set(payload)-{"entity_id","brightness","rgb_color","position","media_content_id","media_content_type"}:
+        if not isinstance(payload,dict) or set(payload)-{"entity_id","brightness","rgb_color","position","media_content_id","media_content_type","volume_level"}:
             return as_json(request,{"error":"Ugyldige parametre"},400)
         entity=payload.get("entity_id","")
         if not isinstance(entity,str) or entity not in device.get("entities",[]) or not entity.startswith(domain+"."):
             return as_json(request,{"error":"Denne enhed er ikke godkendt"},403)
         if "brightness" in payload and not (type(payload["brightness"]) is int and 0<=payload["brightness"]<=255):
             return as_json(request,{"error":"Ugyldig lysstyrke"},400)
+        if "volume_level" in payload and not (type(payload["volume_level"]) in (int,float) and 0<=payload["volume_level"]<=1):
+            return as_json(request,{"error":"Ugyldig lydstyrke"},400)
         if "position" in payload and not (type(payload["position"]) is int and 0<=payload["position"]<=100):
             return as_json(request,{"error":"Ugyldig position"},400)
         if "rgb_color" in payload and (not isinstance(payload["rgb_color"],list) or len(payload["rgb_color"])!=3 or any(type(n) is not int or n<0 or n>255 for n in payload["rgb_color"])):
@@ -432,7 +434,7 @@ class PairUpdate(HomeAssistantView):
         if not isinstance(widget, dict):
             return as_json(request, {"error": "Der mangler et widget"}, 400)
         kind = widget.get("type")
-        if kind not in ("empty", "clock", "text", "sensor", "button", "music"):
+        if kind not in ("empty", "clock", "text", "sensor", "button", "music", "light", "switch", "cover"):
             return as_json(request, {"error": "Ukendt widgettype"}, 400)
         clean = {"type": kind}
         for field in ("label", "value", "entity", "service", "actionTarget", "actionService", "mediaSource", "mediaType"):
@@ -444,6 +446,12 @@ class PairUpdate(HomeAssistantView):
         if action_type not in ("default", "none", "toggle", "service", "url", "saver", "settings", "qr"):
             return as_json(request, {"error": "Ukendt trykhandling"}, 400)
         clean["actionType"] = action_type
+        # Fixed tile types always use server-defined commands; ignore stale advanced actions.
+        if kind in ("light","switch","cover","music","clock","sensor","text","empty"):
+            clean["actionType"] = "default"
+            clean["actionTarget"] = ""
+            clean["actionService"] = ""
+            clean["service"] = ""
         # The phone cannot choose the target slot. The iPad does that.
         item["revision"] += 1
         item["count"] += 1
