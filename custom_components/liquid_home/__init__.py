@@ -270,6 +270,11 @@ class DeviceProxy(HomeAssistantView):
             state=self.hass.states.get(entity)
             if state:
                 attrs={}
+                if entity.startswith("light."):
+                    for k in ("supported_color_modes","brightness","rgb_color"):
+                        attrs[k]=state.attributes.get(k)
+                if entity.startswith("cover."):
+                    attrs["current_position"]=state.attributes.get("current_position")
                 if entity.startswith("media_player."):
                     for k in ("media_title","media_artist","source","entity_picture","volume_level"):
                         attrs[k]=state.attributes.get(k, "")
