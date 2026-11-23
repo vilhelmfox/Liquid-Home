@@ -31,7 +31,9 @@ button{-webkit-transition:opacity .18s ease,-webkit-transform .18s ease;transiti
 <div class="glass"><h2>Pauseskærm</h2><label for="idlePhone">Tilbage til pauseskærm efter antal minutter (0 = aldrig)</label>
 <input id="idlePhone" type="number" min="0" max="120" value="2"><button id="saveIdlePhone" type="button">Gem tid</button><div id="idleMessage" class="muted"></div></div>
 <div class="glass"><h2>Notifikationer</h2><p class="muted">Vis et kort over uret, når en Home Assistant sensor ændrer tilstand. Virker kun med aktiv HA forbindelse, mens iPad'en er åben.</p>
-<label>Entity ID</label><input id="ruleEntity" placeholder="binary_sensor.hoveddor" autocapitalize="none">
+<label for="ruleSearch">Søg efter sensor eller enhed</label><input id="ruleSearch" type="search" placeholder="Fx hoveddør, bevægelse eller temperatur" autocomplete="off">
+<label for="ruleEntitySelect">Vælg enhed til notifikation</label><select id="ruleEntitySelect"><option value="">— Hent enheder fra Home Assistant —</option></select>
+<details><summary class="muted">Avanceret: Angiv entity ID manuelt</summary><input id="ruleEntity" placeholder="binary_sensor.hoveddor" autocapitalize="none"></details>
 <label>Tilstand</label><input id="ruleState" value="on" autocapitalize="none">
 <label>Overskrift</label><input id="ruleTitle" placeholder="Døren er åbnet">
 <label>Beskrivelse</label><input id="ruleBody" placeholder="Hoveddøren blev åbnet">
@@ -97,6 +99,7 @@ function refreshEntityList(){
    if(!ok){el('entityStatus').textContent='Kunne ikke hente enheder. Tjek integrationen og genstart Home Assistant.';return;}
    availableEntities=r.entities||[];el('entityStatus').textContent=availableEntities.length+' enheder fundet. Vælg et felt på iPad, og find derefter enheden her.';
    populateEntitySelect(el('entity').value);
+   populateRuleSelect();
  });
 }
 function populateEntitySelect(current){
@@ -112,6 +115,19 @@ function populateEntitySelect(current){
  if(current&&!known){var extra=document.createElement('option');extra.value=current;extra.textContent=current+' (valgt)';select.appendChild(extra);}
  select.value=current||'';
 }
+function populateRuleSelect(){
+ var select=el('ruleEntitySelect'),current=select.value||el('ruleEntity').value,term=(el('ruleSearch').value||'').toLocaleLowerCase().trim();
+ select.innerHTML='';
+ var placeholder=document.createElement('option');placeholder.value='';placeholder.textContent='— Vælg en sensor eller enhed —';select.appendChild(placeholder);
+ for(var i=0;i<availableEntities.length;i++){
+  var e=availableEntities[i];if(term&&(e.name+' '+e.id).toLocaleLowerCase().indexOf(term)===-1)continue;
+  var opt=document.createElement('option');opt.value=e.id;opt.textContent=e.name+' ('+e.id+')';select.appendChild(opt);
+ }
+ if(current){var found=false;for(var j=0;j<select.options.length;j++){if(select.options[j].value===current){found=true;break;}}if(!found){var extra=document.createElement('option');extra.value=current;extra.textContent=current+' (valgt)';select.appendChild(extra);}}
+ select.value=current||'';
+}
+el('ruleSearch').oninput=populateRuleSelect;
+el('ruleEntitySelect').onchange=function(){if(this.value)el('ruleEntity').value=this.value;};
 function syncQuickAction(){var a=el('quickAction').value;el('mediaOptions').style.display=a==='music'?'block':'none';el('advancedBox').open=a==='advanced';}
 function inferQuick(w){if(!w)return 'toggle';if(w.type==='music')return 'music';if(w.type==='sensor')return 'sensor';if(w.actionType==='none'||w.type==='text'||w.type==='clock'||w.type==='empty')return 'none';if(w.actionType==='service'||w.actionType==='url'||w.actionType==='qr'||w.actionType==='saver')return 'advanced';return 'toggle';}
 el('loadEntities').onclick=refreshEntityList;
@@ -136,7 +152,7 @@ var naturePhotos=[
  'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=1100&q=70'];
 function saveChange(data,id,cb){if(closed)return;req('POST','/api/liquid_home/update/'+encodeURIComponent(sid),Object.assign({key:key},data),function(ok,r){el(id).textContent=ok?'✓ Gemt på iPad':(r.error||'Kunne gemme');if(cb)cb(ok,r);});}
 function renderRulesPhone(){var box=el('rulesList');box.innerHTML='';localRules.forEach(function(rule,i){var div=document.createElement('div');div.className='muted';div.textContent=rule.title+' · '+rule.entity+' = '+rule.state+' ';var del=document.createElement('button');del.textContent='Slet';del.type='button';del.onclick=function(){localRules.splice(i,1);renderRulesPhone();saveChange({rules:localRules},'rulesMessage');};div.appendChild(del);box.appendChild(div);});}
-el('addRulePhone').onclick=function(){var r={entity:el('ruleEntity').value.trim(),state:el('ruleState').value.trim(),title:el('ruleTitle').value.trim(),body:el('ruleBody').value.trim()};if(!r.entity||!r.state||!r.title){el('rulesMessage').textContent='Udfyld entity, tilstand og titel';return;}localRules.push(r);renderRulesPhone();saveChange({rules:localRules},'rulesMessage');};
+el('addRulePhone').onclick=function(){var r={entity:(el('ruleEntitySelect').value||el('ruleEntity').value).trim(),state:el('ruleState').value.trim(),title:el('ruleTitle').value.trim(),body:el('ruleBody').value.trim()};if(!r.entity||!r.state||!r.title){el('rulesMessage').textContent='Udfyld entity, tilstand og titel';return;}localRules.push(r);renderRulesPhone();saveChange({rules:localRules},'rulesMessage');};
 el('testRulePhone').onclick=function(){saveChange({test_notification:{title:'Test fra telefonen',body:'Sådan ser notifikationer ud.'}},'rulesMessage');};
 el('saveIdlePhone').onclick=function(){saveChange({idle:Math.max(0,Math.min(120,Number(el('idlePhone').value)||0))},'idleMessage');};
 function sendBg(data){saveChange({background:data},'backgroundMessage');}
