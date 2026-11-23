@@ -95,7 +95,7 @@ class PairNew(HomeAssistantView):
         rules = settings.get("rules", [])
         if not isinstance(rules, list):
             rules = []
-        rules = [r for r in rules[:20] if isinstance(r, dict) and all(isinstance(r.get(f, ""), str) and len(r.get(f, "")) <= 160 for f in ("entity", "state", "title", "body"))]
+        rules = [r for r in rules[:20] if isinstance(r, dict) and all(isinstance(r.get(f, ""), str) and len(r.get(f, "")) <= 160 for f in ("entity", "state", "title", "body", "emoji"))]
         idle = settings.get("idle", 2)
         idle = idle if type(idle) is int and 0 <= idle <= 120 else 2
         tap = settings.get("tapAction", "dashboard")
@@ -379,12 +379,17 @@ class PairUpdate(HomeAssistantView):
             for rule in rules:
                 if not isinstance(rule, dict):
                     return as_json(request, {"error": "Ugyldig regel"}, 400)
-                fields = ("entity", "state", "title", "body")
+                fields = ("entity", "state", "title", "body", "emoji")
                 if any(not isinstance(rule.get(f, ""), str) or len(rule.get(f, "")) > 160 for f in fields):
                     return as_json(request, {"error": "Ugyldig regeltekst"}, 400)
                 if not rule.get("entity") or not rule.get("state") or not rule.get("title"):
                     return as_json(request, {"error": "Ufuldstændig regel"}, 400)
-                cleaned.append({f: rule.get(f, "") for f in fields})
+                clean = {f: rule.get(f, "") for f in fields}
+                if len(clean["emoji"]) > 12:
+                    return as_json(request, {"error": "Emoji er for lang"}, 400)
+                if not clean["emoji"]:
+                    clean["emoji"] = "🔔"
+                cleaned.append(clean)
             item["settings"]["rules"] = cleaned
             update = {"type": "rules", "value": cleaned}
         elif "background" in data:
@@ -394,9 +399,9 @@ class PairUpdate(HomeAssistantView):
             update = {"type": "background", "value": value}
         elif "test_notification" in data:
             note = data["test_notification"]
-            if not isinstance(note, dict) or any(not isinstance(note.get(f, ""), str) or len(note.get(f, "")) > 160 for f in ("title", "body")):
+            if not isinstance(note, dict) or any(not isinstance(note.get(f, ""), str) or len(note.get(f, "")) > 160 for f in ("title", "body", "emoji")):
                 return as_json(request, {"error": "Ugyldig notifikation"}, 400)
-            update = {"type": "test_notification", "title": note.get("title", "Test"), "body": note.get("body", "")}
+            update = {"type": "test_notification", "title": note.get("title", "Test"), "body": note.get("body", ""), "emoji": note.get("emoji", "🔔") or "🔔"}
         elif "ha_token" in data:
             if not request.secure:
                 return as_json(request, {"error": "HTTPS påkrævet"}, 403)
