@@ -1,6 +1,8 @@
-# Liquid Home v2.0.1 – rettet enhedsvælger
+# Liquid Home v2.0.2 – rettet godkendelse af enhedslisten
 
-**Rettet i v2.0.1:** Telefoneditorens valg af Home Assistant enheder er gjort mere pålideligt, og søgeresultater vises med antal. Notifikationslisten er uændret.
+**Rettet i v2.0.2:** Telefoneditoren kontrollerer nu, om QR sessionen er godkendt med Liquid Home parringskoden, inden enhederne hentes. Efter godkendelse hentes enheder automatisk. Hvis HA afviser adgang, vises den faktiske fejl og HTTP status frem for en misvisende genstartsbesked. Hver ny QR session skal stadig godkendes med parringskoden.
+
+**Rettet i v2.0.1:** Telefoneditorens enhedsvælger bruger felttypen som filter og rydder søgeteksten ved typeændring.
 
 **Nyt i v2.0:** Du vælger blot felttype og, hvor det er nødvendigt, en Home Assistant enhed. Ur kræver ingen indstillinger. Lys: tryk tænd/sluk, hold for lysstyrke og farve når understøttet. Kontakt: tryk tænd/sluk. Musik: tryk afspil/pause, vis albumgrafik når tilgængelig, hold for lydstyrke og skift nummer. Gardin: tryk åbn/luk, hold for præcis position. Sensor viser tilstand. Tidligere lydnotifikationer og emoji valg er bevaret.
 
