@@ -133,7 +133,7 @@ button:active{-webkit-transform:scale(.97);transform:scale(.97)}
 <script>
 (function(){'use strict';
 var KEY='liquid_home_v05',defaults={slots:[{type:'empty'},{type:'empty'},{type:'empty'},{type:'empty'},{type:'empty'},{type:'empty'}],rules:[],bg:'',idle:2,tapAction:'dashboard',backgroundMode:'default',setupComplete:false,natureIndex:-1,natureChangedAt:0};
-var musicStates={},config=defaults,token='',deviceId='',deviceKey='',states={},baseline=false,lastTouch=Date.now(),screen='saver',polling=false;
+var musicStates={},entityAttributes={},config=defaults,token='',deviceId='',deviceKey='',states={},baseline=false,lastTouch=Date.now(),screen='saver',polling=false;
 try{var savedAuth=JSON.parse(localStorage.getItem('liquid_home_access')||'null');if(savedAuth&&savedAuth.id&&savedAuth.key){deviceId=savedAuth.id;deviceKey=savedAuth.key;token='local';}}catch(e){}
 var virginInstall=true;var pair={active:false,editing:false,id:'',key:'',selected:-1,rev:0,busy:false};
 function el(id){return document.getElementById(id)}
@@ -218,7 +218,9 @@ function toggleCurtain(entity){
  var current=states[entity];var svc=(current==='open'||current==='opening')?'close_cover':'open_cover';
  request('POST','services/cover/'+svc,{entity_id:entity},function(ok,result){toast(ok?'Gardiner opdateret':'Gardiner kunne ikke styres',ok?entity:deviceError(result),ok?'✓':'⚠');});
 }
-function openCurtain(w){curtainEntity=curtainTarget(w);el('curtainTitle').textContent=w.label||'Gardiner';el('curtainFeedback').textContent='Vælg åbning fra 0 % (lukket) til 100 % (åbent).';el('curtainOverlay').style.display='flex';lastTouch=Date.now();}
+function openCurtain(w){curtainEntity=curtainTarget(w);el('curtainTitle').textContent=w.label||'Gardiner';el('curtainFeedback').textContent='Vælg åbning fra 0 % (lukket) til 100 % (åbent).';
+ var p=(entityAttributes[curtainEntity]||{}).current_position;
+ if(typeof p==='number'){el('curtainPosition').value=p;el('curtainPercent').textContent=p+' %';}el('curtainOverlay').style.display='flex';lastTouch=Date.now();}
 function closeCurtain(){el('curtainOverlay').style.display='none';curtainEntity='';lastTouch=Date.now();}
 function curtainService(svc,position){if(!curtainEntity)return;var body={entity_id:curtainEntity};if(typeof position==='number')body.position=position;request('POST','services/cover/'+svc,body,function(ok){el('curtainFeedback').textContent=ok?'✓ Kommando sendt':'Kunne ikke styre gardinet. Kontrollér forbindelsen og funktionerne på enheden.';});}
 function lightRGB(h){
@@ -230,6 +232,11 @@ function openLight(w){
  lightEntity=(w.actionType==='toggle'?(w.actionTarget||w.entity):w.entity)||'';
  lightTitle=w.label||'Lys';
  el('lightTitle').textContent=lightTitle;
+ var attrs=entityAttributes[lightEntity]||{},modes=attrs.supported_color_modes||[],hasColor=false,hasDim=false;
+ for(var j=0;j<modes.length;j++){if(['hs','rgb','rgbw','rgbww','xy'].indexOf(modes[j])>=0)hasColor=true;if(modes[j]!=='onoff')hasDim=true;}
+ el('lightHue').parentNode.style.display=hasColor?'':'none';
+ el('lightBrightness').parentNode.style.display=hasDim?'':'none';
+ if(typeof attrs.brightness==='number'){var level=Math.max(1,Math.round(attrs.brightness*100/255));el('lightBrightness').value=level;el('lightBrightnessValue').textContent=level+' %';}
  el('lightFeedback').textContent='Indstillingerne styres her. Opsætning af feltet sker på telefonen.';
  el('lightOverlay').style.display='flex';
  lastTouch=Date.now();
@@ -277,7 +284,7 @@ function openMusic(w){activeMusicWidget=w;el('musicPlayerTitle').textContent=w.l
 function closeMusic(){el('musicOverlay').style.display='none';activeMusicWidget=null;lastTouch=Date.now();}
 function playConfiguredMedia(w){if(!w||!w.entity||!w.mediaSource)return;request('POST','services/media_player/play_media',{entity_id:w.entity,media_content_id:w.mediaSource,media_content_type:w.mediaType||'music'},function(ok){el('musicFeedback').textContent=ok?'✓ Afspilning sendt':'Kunne ikke afspille. Tjek at medieafspilleren understøtter dette medielink.';});}
 function musicAction(w,a){if(!w.entity){toast('Vælg en afspiller','Vælg en afspiller via telefonen.','♫');return;}var service=a==='previous'?'media_previous_track':a==='next'?'media_next_track':'media_play_pause';request('POST','services/media_player/'+service,{entity_id:w.entity},function(ok,result){toast(ok?'Musik opdateret':'Musik kunne ikke styres',ok?(w.label||'Afspiller'):deviceError(result),'♫');});}
-function readStates(){if(!deviceKey||polling||document.hidden)return;polling=true;request('GET','states',null,function(ok,result){polling=false;if(!ok||!result){toast('Home Assistant',deviceError(result),'⚠');return;}var next={};for(var i=0;i<result.length;i++){next[result[i].entity_id]=result[i].state;if(result[i].entity_id.indexOf('media_player.')===0){var a=result[i].attributes||{};musicStates[result[i].entity_id]={title:a.media_title||'',artist:a.media_artist||'',source:a.source||'',picture:a.entity_picture||'',volume:a.volume_level};}}if(baseline){for(var j=0;j<config.rules.length;j++){var r=config.rules[j];if(Object.prototype.hasOwnProperty.call(states,r.entity)&&states[r.entity]!==next[r.entity]&&next[r.entity]===r.state)notificationToast(r.title,r.body||'',r.emoji||'🔔');}}states=next;baseline=true;if(screen==='dashboard')refreshLiveValues();});}
+function readStates(){if(!deviceKey||polling||document.hidden)return;polling=true;request('GET','states',null,function(ok,result){polling=false;if(!ok||!result){toast('Home Assistant',deviceError(result),'⚠');return;}var next={};for(var i=0;i<result.length;i++){next[result[i].entity_id]=result[i].state;entityAttributes[result[i].entity_id]=result[i].attributes||{};if(result[i].entity_id.indexOf('media_player.')===0){var a=result[i].attributes||{};musicStates[result[i].entity_id]={title:a.media_title||'',artist:a.media_artist||'',source:a.source||'',picture:a.entity_picture||'',volume:a.volume_level};}}if(baseline){for(var j=0;j<config.rules.length;j++){var r=config.rules[j];if(Object.prototype.hasOwnProperty.call(states,r.entity)&&states[r.entity]!==next[r.entity]&&next[r.entity]===r.state)notificationToast(r.title,r.body||'',r.emoji||'🔔');}}states=next;baseline=true;if(screen==='dashboard')refreshLiveValues();});}
 var nature=[
 'https://images.unsplash.com/photo-1470770841072-f978cf4d019e?w=1300&q=75',
 'https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=1300&q=75',
@@ -361,10 +368,13 @@ el('lightHue').oninput=function(){el('lightHueValue').textContent=this.value+'°
 el('lightApply').onclick=function(){
  if(!lightEntity)return;
  var brightness=Math.max(1,Math.min(255,Math.round(Number(el('lightBrightness').value)*255/100)));
- var rgb=lightRGB(el('lightHue').value);
+ var rgb=lightRGB(el('lightHue').value),attrs=entityAttributes[lightEntity]||{},modes=attrs.supported_color_modes||[];
+ var params={entity_id:lightEntity};
+ if(modes.indexOf('onoff')<0)params.brightness=brightness;
+ if(modes.indexOf('hs')>=0||modes.indexOf('rgb')>=0||modes.indexOf('rgbw')>=0||modes.indexOf('rgbww')>=0||modes.indexOf('xy')>=0)params.rgb_color=rgb;
  el('lightApply').disabled=true;
  el('lightFeedback').textContent='Sender indstillinger …';
- request('POST','services/light/turn_on',{entity_id:lightEntity,brightness:brightness,rgb_color:rgb},function(ok){
+ request('POST','services/light/turn_on',params,function(ok){
    el('lightApply').disabled=false;
    el('lightFeedback').textContent=ok?'✓ Lys opdateret':'Kunne ikke indstille lyset. Kontrollér HA forbindelse og om lyset understøtter farver.';
  });
