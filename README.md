@@ -1,4 +1,6 @@
-# Liquid Home v2.0 – enkel betjening uden avancerede indstillinger
+# Liquid Home v2.0.1 – rettet enhedsvælger
+
+**Rettet i v2.0.1:** Telefoneditorens valg af Home Assistant enheder er gjort mere pålideligt, og søgeresultater vises med antal. Notifikationslisten er uændret.
 
 **Nyt i v2.0:** Du vælger blot felttype og, hvor det er nødvendigt, en Home Assistant enhed. Ur kræver ingen indstillinger. Lys: tryk tænd/sluk, hold for lysstyrke og farve når understøttet. Kontakt: tryk tænd/sluk. Musik: tryk afspil/pause, vis albumgrafik når tilgængelig, hold for lydstyrke og skift nummer. Gardin: tryk åbn/luk, hold for præcis position. Sensor viser tilstand. Tidligere lydnotifikationer og emoji valg er bevaret.
 
