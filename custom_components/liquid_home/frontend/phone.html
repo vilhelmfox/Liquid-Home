@@ -242,6 +242,13 @@ el('form').onsubmit=function(ev){
  if(allowed[kind]&&allowed[kind].indexOf(domain)<0){el('message').textContent='Vælg en Home Assistant enhed, der passer til typen '+kind+'.';return;}
  var w={type:kind,label:el('label').value.trim(),value:el('value').value,entity:allowed[kind]?entity:'',
  service:'',actionType:'default',actionTarget:'',actionService:'',mediaSource:'',mediaType:'music'};
+ // Older Liquid Home servers accept "button", but not the new light/switch/cover types.
+ // Store these as compatible buttons; the iPad already supports their automatic
+ // toggle and long-press brightness/position behavior through actionType.
+ if(kind==='light'||kind==='switch'||kind==='cover'){
+   w.type='button';w.actionType='toggle';w.actionTarget=entity;
+   w.service=(kind==='cover'?'cover.open_cover':entity.split('.')[0]+'.toggle');
+ }
  el('save').disabled=true;
  req('POST','/api/liquid_home/update/'+encodeURIComponent(sid),{key:key,widget:w},function(ok,r){
   el('save').disabled=false;el('message').textContent=ok?'✓ Gemt! Tryk på feltet på iPad for at prøve det.':(r.error||'Kunne ikke gemme');
