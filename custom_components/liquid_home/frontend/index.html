@@ -142,6 +142,26 @@ function tapDescription(){var a=config.tapAction||'dashboard';return a==='dashbo
 function updateTapHint(){el('tapHint').textContent=tapDescription();}
 function performSaverTap(){var a=config.tapAction||'dashboard';if(a==='qr')startPair();else if(a==='dashboard')setScreen('dashboard');}
 function setScreen(which){screen=which;el('saver').style.display=which==='saver'?'flex':'none';el('dashboard').style.display=which==='dashboard'?'block':'none';lastTouch=Date.now();if(which==='dashboard')draw();}
+var notificationAudio=null,notificationAudioUnlocked=false;
+function unlockNotificationAudio(){
+ if(notificationAudioUnlocked)return;
+ try{
+  if(!notificationAudio){notificationAudio=new Audio('/liquid_home/notification.mp3');notificationAudio.preload='auto';}
+  /* Browsers may require one tap before sound playback is allowed. */
+  notificationAudioUnlocked=true;
+ }catch(e){}
+}
+function playNotificationSound(){
+ try{
+  if(!notificationAudio)unlockNotificationAudio();
+  if(!notificationAudio)return;
+  notificationAudio.pause();
+  notificationAudio.currentTime=0;
+  var play=notificationAudio.play();
+  if(play&&typeof play.catch==='function')play.catch(function(){});
+ }catch(e){}
+}
+function notificationToast(title,body,icon){toast(title,body,icon);playNotificationSound();}
 function toast(title,body,icon){var d=document.createElement('div');d.className='toast';d.innerHTML='<span class="symbol">'+escape(icon||'🔔')+'</span><span><b>'+escape(title)+'</b><small>'+escape(body||'')+'</small></span>';el('toastStack').appendChild(d);setTimeout(function(){if(d.parentNode)d.parentNode.removeChild(d);},4800);}
 function setBackground(url){if(!url){el('bgPhoto').style.display='none';el('bgPhoto').removeAttribute('src');return;}var img=new Image();img.onload=function(){el('bgPhoto').src=url;el('bgPhoto').style.display='block';};img.onerror=function(){if(config.backgroundMode==='nature'){/* Keep the previous successfully loaded image. */}else el('bgPhoto').style.display='none';};img.src=url;}
 function cycleNature(force){
@@ -239,7 +259,7 @@ function openMusic(w){activeMusicWidget=w;el('musicPlayerTitle').textContent=w.l
 function closeMusic(){el('musicOverlay').style.display='none';activeMusicWidget=null;lastTouch=Date.now();}
 function playConfiguredMedia(w){if(!w||!w.entity||!w.mediaSource)return;request('POST','services/media_player/play_media',{entity_id:w.entity,media_content_id:w.mediaSource,media_content_type:w.mediaType||'music'},function(ok){el('musicFeedback').textContent=ok?'✓ Afspilning sendt':'Kunne ikke afspille. Tjek at medieafspilleren understøtter dette medielink.';});}
 function musicAction(w,a){if(!w.entity){toast('Vælg en afspiller','Vælg en afspiller via telefonen.','♫');return;}var service=a==='previous'?'media_previous_track':a==='next'?'media_next_track':'media_play_pause';request('POST','services/media_player/'+service,{entity_id:w.entity},function(ok,result){toast(ok?'Musik opdateret':'Musik kunne ikke styres',ok?(w.label||'Afspiller'):deviceError(result),'♫');});}
-function readStates(){if(!deviceKey||polling||document.hidden)return;polling=true;request('GET','states',null,function(ok,result){polling=false;if(!ok||!result){toast('Home Assistant',deviceError(result),'⚠');return;}var next={};for(var i=0;i<result.length;i++){next[result[i].entity_id]=result[i].state;if(result[i].entity_id.indexOf('media_player.')===0){var a=result[i].attributes||{};musicStates[result[i].entity_id]={title:a.media_title||'',artist:a.media_artist||'',source:a.source||''};}}if(baseline){for(var j=0;j<config.rules.length;j++){var r=config.rules[j];if(Object.prototype.hasOwnProperty.call(states,r.entity)&&states[r.entity]!==next[r.entity]&&next[r.entity]===r.state)toast(r.title,r.body||'', '🔔');}}states=next;baseline=true;if(screen==='dashboard')refreshLiveValues();});}
+function readStates(){if(!deviceKey||polling||document.hidden)return;polling=true;request('GET','states',null,function(ok,result){polling=false;if(!ok||!result){toast('Home Assistant',deviceError(result),'⚠');return;}var next={};for(var i=0;i<result.length;i++){next[result[i].entity_id]=result[i].state;if(result[i].entity_id.indexOf('media_player.')===0){var a=result[i].attributes||{};musicStates[result[i].entity_id]={title:a.media_title||'',artist:a.media_artist||'',source:a.source||''};}}if(baseline){for(var j=0;j<config.rules.length;j++){var r=config.rules[j];if(Object.prototype.hasOwnProperty.call(states,r.entity)&&states[r.entity]!==next[r.entity]&&next[r.entity]===r.state)notificationToast(r.title,r.body||'',r.emoji||'🔔');}}states=next;baseline=true;if(screen==='dashboard')refreshLiveValues();});}
 var nature=[
 'https://images.unsplash.com/photo-1470770841072-f978cf4d019e?w=1300&q=75',
 'https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=1300&q=75',
@@ -278,7 +298,7 @@ function pollPhoneChanges(){
    if(u.type==='tap_action'&&['dashboard','qr','none'].indexOf(u.value)>=0){config.tapAction=u.value;save();updateTapHint();toast('Trykhandling opdateret','Ændret fra telefonen.','✓');}
    else if(u.type==='idle'){config.idle=u.value;save();toast('Pauseskærm','Tid gemt fra telefonen.','✓');}
    else if(u.type==='rules'){config.rules=u.value;save();toast('Notifikationer opdateret','Regler gemt fra telefonen.','✓');}
-   else if(u.type==='test_notification'){toast(u.title,u.body,'🔔');}
+   else if(u.type==='test_notification'){notificationToast(u.title,u.body,u.emoji||'🔔');}
    else if(u.type==='background'){var previous=config.bg;config.bg=u.value;config.backgroundMode=u.value?'custom':'default';if(save())applyBackground();else config.bg=previous;}
    else if(u.type==='background_mode'){config.backgroundMode=u.value;config.natureIndex=-1;config.natureChangedAt=0;save();applyBackground();}
    else if(u.type==='reset_all'){try{localStorage.removeItem(KEY);}catch(e){}config=JSON.parse(JSON.stringify(defaults));token='';deviceId='';deviceKey='';try{localStorage.removeItem('liquid_home_access');}catch(e){}states={};musicStates={};baseline=false;virginInstall=true;save();updateTapHint();applyBackground();draw();setScreen('saver');document.body.className+=' first-run';el('pairTitle').textContent='Scan QR koden for at komme i gang';el('pairPanel').style.display='block';toast('Nulstillet','Start opsætningen på telefonen.','✓');}
@@ -344,7 +364,7 @@ el('musicNext').onclick=function(){if(activeMusicWidget)musicAction(activeMusicW
 el('musicPlayMedia').onclick=function(){if(activeMusicWidget)playConfiguredMedia(activeMusicWidget);};
 el('sleepBtn').onclick=function(){setScreen('saver');};
 el('editBtn').onclick=function(){if(pair.active&&pair.editing){endPair();}else{startPair();}};
-document.addEventListener('touchstart',function(){lastTouch=Date.now();},{passive:true});document.addEventListener('click',function(){lastTouch=Date.now();});
+document.addEventListener('touchstart',function(){lastTouch=Date.now();unlockNotificationAudio();},{passive:true});document.addEventListener('click',function(){lastTouch=Date.now();unlockNotificationAudio();});
 setInterval(function(){clock();if(screen==='dashboard'&&el('curtainOverlay').style.display!=='flex'&&el('lightOverlay').style.display!=='flex'&&el('musicOverlay').style.display!=='flex'&&config.idle>0&&Date.now()-lastTouch>config.idle*60000)setScreen('saver');},1000);
 setInterval(readStates,5000);setInterval(pollPhoneChanges,1100);setInterval(function(){cycleNature(false);},60000);
 load();updateTapHint();applyBackground();clock();setScreen('saver');if(!config.setupComplete){setTimeout(startPair,400);}if(navigator.standalone===true)document.body.className='standalone';
