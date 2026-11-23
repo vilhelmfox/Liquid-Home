@@ -43,7 +43,7 @@ button{-webkit-transition:opacity .18s ease,-webkit-transform .18s ease;transiti
 <div class="glass"><h2>Forenklet opsætning</h2><p class="muted">Vælg først et af de seks felter på iPad'en, og vælg derefter hvad det skal gøre. Dropdownmenuerne viser dine Home Assistant enheder automatisk.</p>
 <button id="loadEntities" type="button">↻ Hent enheder fra Home Assistant</button><div id="entityStatus" class="muted">Forbind først med den automatisk genererede parringskode ovenfor.</div></div>
 <div class="glass"><div id="status">Opretter forbindelse …</div><div id="slotHint" class="chip">Afventer valg på iPad</div><form id="form"><label for="kind">Hvad skal feltet vise?</label><select id="kind"><option value="empty">Tomt felt</option><option value="clock">Ur</option><option value="text">Tekst</option><option value="sensor">Sensor fra Home Assistant</option><option value="button">Styringsknap</option><option value="music">Musik</option></select><label for="label">Navn</label><input id="label" placeholder="Fx Køkkenlys"><label for="value">Tekst / indhold</label><input id="value" placeholder="Fx Velkommen hjem"><label for="deviceFilter">Vælg type enhed</label><select id="deviceFilter"><option value="all">Alle enheder</option><option value="light">💡 Lys</option><option value="cover">🪟 Gardiner</option><option value="media_player">♫ Musikafspillere</option><option value="switch">🔌 Kontakter</option><option value="sensor">🌡 Sensorer</option><option value="other">Andre</option></select>
-<label for="entitySelect">Vælg enhed</label><select id="entitySelect"><option value="">— Vælg fra Home Assistant —</option></select>
+<label for="entitySearch">Søg efter enhed</label><input id="entitySearch" type="search" placeholder="Søg på navn eller entity ID, fx køkken" autocomplete="off"><label for="entitySelect">Vælg enhed</label><select id="entitySelect"><option value="">— Vælg fra Home Assistant —</option></select>
 <details><summary class="muted">Avanceret: indtast entity ID selv</summary><input id="entity" autocapitalize="none" autocomplete="off" placeholder="Fx light.koekken"></details><label for="quickAction">Hvad skal feltet gøre?</label><select id="quickAction">
 <option value="toggle">Tænd / sluk lys eller kontakt · Åbn / luk gardin</option>
 <option value="music">Musik: Afspil, pause, næste og forrige</option>
@@ -100,12 +100,13 @@ function refreshEntityList(){
  });
 }
 function populateEntitySelect(current){
- var select=el('entitySelect'),filter=el('deviceFilter').value;select.innerHTML='';
+ var select=el('entitySelect'),filter=el('deviceFilter').value,term=(el('entitySearch').value||'').toLocaleLowerCase().trim();select.innerHTML='';
  var placeholder=document.createElement('option');placeholder.value='';placeholder.textContent='— Vælg en enhed —';select.appendChild(placeholder);
  var known=false;
  for(var i=0;i<availableEntities.length;i++){
   var e=availableEntities[i];var recognized=['light','cover','media_player','switch','sensor'];
   if(filter!=='all'&&!(filter==='other'&&recognized.indexOf(e.domain)===-1)&&e.domain!==filter)continue;
+  if(term&&(e.name+' '+e.id+' '+e.domain).toLocaleLowerCase().indexOf(term)===-1)continue;
   var o=document.createElement('option');o.value=e.id;o.textContent=e.name+' ('+e.id+')';select.appendChild(o);if(e.id===current)known=true;
  }
  if(current&&!known){var extra=document.createElement('option');extra.value=current;extra.textContent=current+' (valgt)';select.appendChild(extra);}
@@ -115,6 +116,7 @@ function syncQuickAction(){var a=el('quickAction').value;el('mediaOptions').styl
 function inferQuick(w){if(!w)return 'toggle';if(w.type==='music')return 'music';if(w.type==='sensor')return 'sensor';if(w.actionType==='none'||w.type==='text'||w.type==='clock'||w.type==='empty')return 'none';if(w.actionType==='service'||w.actionType==='url'||w.actionType==='qr'||w.actionType==='saver')return 'advanced';return 'toggle';}
 el('loadEntities').onclick=refreshEntityList;
 el('deviceFilter').onchange=function(){populateEntitySelect(el('entity').value)};
+el('entitySearch').oninput=function(){populateEntitySelect(el('entity').value)};
 el('entitySelect').onchange=function(){el('entity').value=this.value;if(this.value.indexOf('media_player.')===0)el('quickAction').value='music';else if(this.value.indexOf('sensor.')===0||this.value.indexOf('binary_sensor.')===0)el('quickAction').value='sensor';else el('quickAction').value='toggle';syncQuickAction();};
 el('quickAction').onchange=syncQuickAction;
 el('resetSetup').onclick=function(){
