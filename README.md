@@ -1,4 +1,6 @@
-# Liquid Home v1.6 – opsætning uden filer
+# Liquid Home v1.7 – opsætning uden filer
+
+**Nyt i v1.7:** Søg blandt Home Assistant enheder direkte på telefonen. QR redigering låser ikke længere styringen, når du vælger *Fortsæt til dashboardet*. Tryk tænder/slukker enheder, langt tryk åbner regulering af lys og gardiner. Ved fejl vises Home Assistants faktiske fejlbesked på iPad'en.
 
 Liquid Home giver din iPad et glasagtigt ur og et dashboard med seks felter. Hele tilpasningen foregår fra telefonen via en QR kode.
 
