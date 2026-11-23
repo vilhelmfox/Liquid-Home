@@ -1,6 +1,8 @@
-# Liquid Home v1.9 – notifikationer med lyd og emoji
+# Liquid Home v2.0 – enkel betjening uden avancerede indstillinger
 
-**Nyt i v1.9:** Notifikationer kan få deres egen emoji (f.eks. 🚪, 🔔, 💡 og 🐕), som vælges på telefonen. Den vedhæftede ding lyd afspilles ved notifikationer og ved testknappen. Tryk én gang på 🔊 øverst på iPad'en for at afprøve og aktivere lyd i Safari. iPad Air 1 kan blokere automatisk lyd, indtil der har været en brugerhandling. Tidligere forbedringer til redigering, enhedssøgning og stabile sensoropdateringer er bevaret.
+**Nyt i v2.0:** Du vælger blot felttype og, hvor det er nødvendigt, en Home Assistant enhed. Ur kræver ingen indstillinger. Lys: tryk tænd/sluk, hold for lysstyrke og farve når understøttet. Kontakt: tryk tænd/sluk. Musik: tryk afspil/pause, vis albumgrafik når tilgængelig, hold for lydstyrke og skift nummer. Gardin: tryk åbn/luk, hold for præcis position. Sensor viser tilstand. Tidligere lydnotifikationer og emoji valg er bevaret.
+
+**Opgradering:** Felter fra ældre udgaver kan fortsat vises, men vælg deres nye type i telefoneditoren og gem dem igen, så de får de automatiske handlinger.
 
 Liquid Home giver din iPad et glasagtigt ur og et dashboard med seks felter. Hele tilpasningen foregår fra telefonen via en QR kode.
 
