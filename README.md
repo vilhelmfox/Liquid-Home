@@ -1,28 +1,41 @@
-# Liquid Home 1.5 — HACS-klar prototype
+# Liquid Home v1.6 – opsætning uden filer
 
-Liquid Glass pauseskærm og et 3 × 2 dashboard til gamle iPads (iOS 12), med opsætning fra telefonen ved QR kode.
+Liquid Home giver din iPad et glasagtigt ur og et dashboard med seks felter. Hele tilpasningen foregår fra telefonen via en QR kode.
 
-## Installation — ingen YAML eller manuel kopiering af HTML
+## Hvorfor får jeg 404: Not Found?
 
-**Forudsætning:** Projektet skal ligge i et GitHub repository, før det kan tilføjes som *Custom Repository* i HACS. ZIP filen er **ikke** et HACS-installationslink, og repoet er ikke publiceret automatisk.
+Hvis adressen `http://homeassistant.local:8123/liquid_home/index.html` giver 404, er Liquid Home endnu **ikke indlæst og aktiveret** i Home Assistant, eller du bruger en gammel installation.
 
-1. Læg hele dette projekts indhold i roden af et GitHub repository.
-2. Åbn HACS i Home Assistant → tre prikker → **Custom repositories** → indsæt repositoryets URL → kategori **Integration**.
-3. Installér **Liquid Home** og genstart Home Assistant.
-4. Gå til **Indstillinger → Enheder og tjenester → Tilføj integration → Liquid Home**.
-5. Vælg en parringskode på mindst 12 tegn i installationsdialogen. Ingen `configuration.yaml`.
-6. Åbn `http://homeassistant.local:8123/liquid_home/index.html` på iPad'en.
-7. Scan QR koden med telefonen. Angiv parringskoden én gang på telefonen for at godkende.
-8. Tryk på felterne på iPad'en og vælg enheder fra listen på telefonen.
+**Vigtigt:** En integration kan ikke selv vise en hjælpeside på sin Home Assistant adresse, før Home Assistant har startet integrationen. Derfor er denne vejledning også på GitHub, selv når den lokale adresse endnu ikke virker.
 
-### Eksisterende bruger af v1.4
-Fjern den gamle `liquid_home:` sektion fra `configuration.yaml` **en enkelt gang**, før du genstarter med v1.5, da den gamle variant ellers kan skabe forvirring. Ingen efterfølgende filredigering er nødvendig. HACS kan ikke importere en gammel YAML-adgangskode automatisk. En gammel hjemmeskærmsgenvej til `/local/liquid-home.html` skal oprettes på ny med `/liquid_home/index.html`.
+### Første installation (ingen filredigering)
 
-### Sikkerhed og begrænsninger
-- Dette er en **prototype**, ikke sikkerhedsrevideret eller testet på din konkrete Raspberry Pi 5 og iPad Air 1.
-- Parringskoden og den særskilte enhedsnøgle kan opsnappes over HTTP. Brug kun et betroet lokalt net og eksponér **aldrig** porten mod internettet. HTTPS anbefales, hvor muligt.
-- Integrationens enhedsnøgle er begrænset til de valgte entiteter og handlinger, men er ikke en erstatning for netværkskryptering.
-- QR parring er en lokal session på 15 minutter.
-- Et LLAT er ikke nødvendigt: integrationen kan kalde Home Assistants interne service API.
-- Telefonen skal kende parringskoden. Vi kan senere erstatte dette med en godkendelsesdialog fra Home Assistant.
-- Der kræves fortsat en første installation af en integration via HACS og en GitHub repositoryadresse. HACS kan ikke installere direkte fra denne ZIP fil.
+1. Installér **HACS** i Home Assistant, hvis du ikke allerede har det.
+2. Åbn **HACS → ⋮ → Custom repositories**.
+3. Tilføj `https://github.com/vilhelmfox/Liquid-Home` som typen **Integration**.
+4. Download **Liquid Home** i HACS.
+5. **Genstart Home Assistant** under Indstillinger → System.
+6. Åbn **Indstillinger → Enheder og tjenester → Tilføj integration** og søg efter **Liquid Home**.
+7. Home Assistant viser en **automatisk genereret parringskode**. Du skal ikke selv finde på en. Gem den et sikkert sted, og tryk **Send**.
+8. Åbn **http://homeassistant.local:8123/liquid_home/index.html** på iPad'en.
+9. iPad'en viser en **QR kode**. Scan den med telefonens kamera for at åbne telefoneditoren.
+10. På telefonen indtaster du den genererede parringskode én gang og vælger dine Home Assistant enheder fra listerne.
+
+### Hvor finder jeg koden igen?
+
+Åbn **Indstillinger → Enheder og tjenester → Liquid Home → Konfigurer**. Her kan du se koden og generere en ny, uden at redigere YAML eller filer.
+
+QR koden på iPad'en åbner den rigtige telefoneditor til netop din iPad. Den indeholder ikke den hemmelige parringskode; koden indtastes kun på telefonen. En kodeændring tilbagekalder ikke allerede parrede enhedsnøgler.
+
+### Hvis Liquid Home stadig viser 404
+
+- Kontrollér, at integrationen er downloadet i HACS, og genstart Home Assistant.
+- Kontrollér, at den også er tilføjet under **Enheder og tjenester**.
+- Genindlæs siden på iPad'en.
+- Se **Indstillinger → System → Logfiler**, og kig efter `liquid_home` fejl.
+
+## Sikkerhed
+
+Denne version er en prototype, som ikke er afprøvet på alle Home Assistant versioner. Forbindelsen via HTTP er ukrypteret, også ved brug af parringskoden og enhedsnøgler. Brug den kun på et betroet lokalnetværk. Giv aldrig Home Assistant direkte internetadgang gennem port 8123 uden korrekt beskyttelse.
+
+Du behøver hverken Long-Lived Access Token eller at ændre `configuration.yaml` ved en ny installation.
