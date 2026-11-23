@@ -52,9 +52,10 @@ button{-webkit-transition:opacity .18s ease,-webkit-transform .18s ease;transiti
 <button id="connectPhone" type="button">Forbind iPad til HA</button><button id="disconnectPhone" type="button">Afbryd iPad</button><div id="connectionMessage" class="muted"></div></div>
 <div class="glass"><h2>Forenklet opsætning</h2><p class="muted">Vælg først et af de seks felter på iPad'en, og vælg derefter hvad det skal gøre. Dropdownmenuerne viser dine Home Assistant enheder automatisk.</p>
 <button id="loadEntities" type="button">↻ Hent enheder fra Home Assistant</button><div id="entityStatus" class="muted">Forbind først med den automatisk genererede parringskode ovenfor.</div></div>
-<div class="glass"><div id="status">Opretter forbindelse …</div><div id="slotHint" class="chip">Afventer valg på iPad</div><form id="form"><label for="kind">Hvad skal feltet vise?</label><select id="kind"><option value="empty">Tomt felt</option><option value="clock">Ur</option><option value="text">Tekst</option><option value="sensor">Sensor fra Home Assistant</option><option value="button">Styringsknap</option><option value="music">Musik</option></select><label for="label">Navn</label><input id="label" placeholder="Fx Køkkenlys"><label for="value">Tekst / indhold</label><input id="value" placeholder="Fx Velkommen hjem"><label for="deviceFilter">Vælg type enhed</label><select id="deviceFilter"><option value="all">Alle enheder</option><option value="light">💡 Lys</option><option value="cover">🪟 Gardiner</option><option value="media_player">♫ Musikafspillere</option><option value="switch">🔌 Kontakter</option><option value="sensor">🌡 Sensorer</option><option value="other">Andre</option></select>
+<div class="glass"><div id="status">Opretter forbindelse …</div><div id="slotHint" class="chip">Afventer valg på iPad</div><form id="form"><label for="kind">Hvad skal feltet være?</label><select id="kind"><option value="empty">＋ Tomt</option><option value="clock">🕒 Ur · ingen indstillinger</option><option value="light">💡 Lys · tryk tænd/sluk, hold for lysstyrke og farve</option><option value="switch">🔌 Kontakt · tryk tænd/sluk</option><option value="music">🎵 Musik · tryk afspil/pause, hold for lydstyrke og næste</option><option value="cover">🪟 Gardin · tryk åbn/luk, hold for position</option><option value="sensor">🌡️ Sensor · vis status</option><option value="text">✏️ Tekst</option></select>
+<p class="muted" id="kindHelp">Vælg typen. Liquid Home vælger selv handlingerne.</p><label for="label">Navn</label><input id="label" placeholder="Fx Køkkenlys"><label for="value">Tekst / indhold</label><input id="value" placeholder="Fx Velkommen hjem"><div id="entitySettings"><label for="deviceFilter">Vælg type enhed</label><select id="deviceFilter"><option value="all">Alle enheder</option><option value="light">💡 Lys</option><option value="cover">🪟 Gardiner</option><option value="media_player">♫ Musikafspillere</option><option value="switch">🔌 Kontakter</option><option value="sensor">🌡 Sensorer</option><option value="other">Andre</option></select>
 <label for="entitySearch">Søg efter enhed</label><input id="entitySearch" type="search" placeholder="Søg på navn eller entity ID, fx køkken" autocomplete="off"><label for="entitySelect">Vælg enhed</label><select id="entitySelect"><option value="">— Vælg fra Home Assistant —</option></select>
-<details><summary class="muted">Avanceret: indtast entity ID selv</summary><input id="entity" autocapitalize="none" autocomplete="off" placeholder="Fx light.koekken"></details><label for="quickAction">Hvad skal feltet gøre?</label><select id="quickAction">
+<details><summary class="muted">Avanceret: indtast entity ID selv</summary><input id="entity" autocapitalize="none" autocomplete="off" placeholder="Fx light.koekken"></details></div><div id="legacyActions" style="display:none"><label for="quickAction">Hvad skal feltet gøre?</label><select id="quickAction">
 <option value="toggle">Tænd / sluk lys eller kontakt · Åbn / luk gardin</option>
 <option value="music">Musik: Afspil, pause, næste og forrige</option>
 <option value="sensor">Vis status / temperatur</option><option value="none">Kun visning</option>
@@ -62,7 +63,7 @@ button{-webkit-transition:opacity .18s ease,-webkit-transform .18s ease;transiti
 <details id="advancedBox"><summary class="muted">Avancerede handlinger</summary><label for="service">Home Assistant handling</label><input id="service" autocapitalize="none" autocomplete="off" placeholder="Fx light.toggle">
 <label for="tileAction">Trykhandling</label><select id="tileAction"><option value="default">Standard</option><option value="none">Ingen</option><option value="toggle">Tænd / sluk</option><option value="service">Kør handling</option><option value="url">Åbn URL</option><option value="saver">Pauseskærm</option><option value="qr">QR kode</option></select>
 <label for="actionTarget">Mål / URL</label><input id="actionTarget" autocapitalize="none"><label for="actionService">Service</label><input id="actionService" autocapitalize="none"></details>
-<div id="mediaOptions" style="display:none"><label for="mediaSource">Sang, playliste eller medie-URI (valgfrit)</label><input id="mediaSource" placeholder="fx media-source://... eller https://..." autocapitalize="none"><label for="mediaType">Medietype</label><select id="mediaType"><option value="music">Musik</option><option value="playlist">Playliste</option><option value="url">URL</option></select><p class="muted">Afspilning af en bestemt sang kræver, at din Home Assistant medieafspiller understøtter medie-URI'en.</p></div><button id="save" type="submit">Gem på iPad ✓</button></form><div id="message"></div></div><p class="muted">Forbindelsen udløber automatisk efter 15 minutter. Redigeringen sker lokalt via din Home Assistant, og du skal ikke oprette en konto.</p><div class="glass"><h2>Start forfra</h2><p class="muted">Nulstil Liquid Home på iPad'en og åbn velkomstguiden igen. Dette sletter alle seks felter, baggrund, regler og forbindelsen på iPad'en.</p>
+</div><div id="mediaOptions" style="display:none"><label for="mediaSource">Sang, playliste eller medie-URI (valgfrit)</label><input id="mediaSource" placeholder="fx media-source://... eller https://..." autocapitalize="none"><label for="mediaType">Medietype</label><select id="mediaType"><option value="music">Musik</option><option value="playlist">Playliste</option><option value="url">URL</option></select><p class="muted">Afspilning af en bestemt sang kræver, at din Home Assistant medieafspiller understøtter medie-URI'en.</p></div><button id="save" type="submit">Gem på iPad ✓</button></form><div id="message"></div></div><p class="muted">Forbindelsen udløber automatisk efter 15 minutter. Redigeringen sker lokalt via din Home Assistant, og du skal ikke oprette en konto.</p><div class="glass"><h2>Start forfra</h2><p class="muted">Nulstil Liquid Home på iPad'en og åbn velkomstguiden igen. Dette sletter alle seks felter, baggrund, regler og forbindelsen på iPad'en.</p>
 <button id="resetSetup" type="button" style="background:#ffd8d3;color:#4b1711">Nulstil og start opsætning igen</button><div id="resetMessage" class="muted"></div></div></main>
 <div id="wizard"><div id="wizardBox">
 <div class="progressText" id="wizardProgress">TRIN 1 AF 4</div>
@@ -99,7 +100,10 @@ function wizardAdvance(){if(wizardStep===3){finishWizard();return;}
 }
 var wizardUploaded=false;
 function uploadFile(input,message,done){var f=input.files&&input.files[0];if(!f){el(message).textContent='Vælg et billede først';return;}var reader=new FileReader();reader.onload=function(){var im=new Image();im.onload=function(){compressImage(im,function(data){saveChange({background:data},message,function(ok){if(ok){wizardUploaded=true;if(done)done();}});});};im.onerror=function(){el(message).textContent='Billedet kunne ikke læses';};im.src=reader.result;};reader.readAsDataURL(f);}
-function poll(){if(busy||closed)return;busy=true;req('GET','/api/liquid_home/state/'+encodeURIComponent(sid)+'?key='+encodeURIComponent(key),null,function(ok,r){busy=false;if(!ok){el('status').textContent='Forbindelsen er afbrudt';el('message').textContent=r.error||'Prøv at scanne en ny QR kode';el('form').style.display='none';closed=true;return;}el('status').textContent='Forbundet til iPad';if(r.settings && !window.initialSettings){refreshEntityList();if(r.settings.setupComplete===false)startWizard();window.initialSettings=true;localRules=r.settings.rules||[];el('idlePhone').value=r.settings.idle===undefined?2:r.settings.idle;el('tapActionPhone').value=r.settings.tapAction||'dashboard';renderRulesPhone();}if(selected!==r.selected){selected=r.selected;if(selected>=0){if(r.widget){['kind','label','value','entity','service','tileAction','actionTarget','actionService'].forEach(function(id){var property=id==='kind'?'type':id;el(id).value=r.widget[property]||((id==='kind')?'empty':(id==='tileAction'?'default':''));});}el('mediaSource').value=(r.widget&&r.widget.mediaSource)||'';el('mediaType').value=(r.widget&&r.widget.mediaType)||'music';el('quickAction').value=inferQuick(r.widget);syncQuickAction();populateEntitySelect(el('entity').value);el('slotHint').textContent='Redigerer felt '+(selected+1)+' af 6';el('form').style.display='block';el('message').textContent='Vælg indhold, og tryk Gem på iPad.';}else{el('slotHint').textContent='Tryk på et felt på iPad';el('form').style.display='none';}}});}
+function poll(){if(busy||closed)return;busy=true;req('GET','/api/liquid_home/state/'+encodeURIComponent(sid)+'?key='+encodeURIComponent(key),null,function(ok,r){busy=false;if(!ok){el('status').textContent='Forbindelsen er afbrudt';el('message').textContent=r.error||'Prøv at scanne en ny QR kode';el('form').style.display='none';closed=true;return;}el('status').textContent='Forbundet til iPad';if(r.settings && !window.initialSettings){refreshEntityList();if(r.settings.setupComplete===false)startWizard();window.initialSettings=true;localRules=r.settings.rules||[];el('idlePhone').value=r.settings.idle===undefined?2:r.settings.idle;el('tapActionPhone').value=r.settings.tapAction||'dashboard';renderRulesPhone();}if(selected!==r.selected){selected=r.selected;if(selected>=0){if(r.widget){['kind','label','value','entity','service','tileAction','actionTarget','actionService'].forEach(function(id){var property=id==='kind'?'type':id;el(id).value=r.widget[property]||((id==='kind')?'empty':(id==='tileAction'?'default':''));});}el('mediaSource').value=(r.widget&&r.widget.mediaSource)||'';el('mediaType').value=(r.widget&&r.widget.mediaType)||'music';var oldKind=r.widget&&r.widget.type;
+if(oldKind==='button'){var oldEntity=(r.widget.entity||r.widget.actionTarget||'');oldKind=oldEntity.split('.')[0];if(['light','switch','cover'].indexOf(oldKind)<0)oldKind='switch';}
+if(oldKind&&el('kind').querySelector('option[value="'+oldKind+'"]'))el('kind').value=oldKind;
+updateKindUI();el('slotHint').textContent='Redigerer felt '+(selected+1)+' af 6';el('form').style.display='block';el('message').textContent='Vælg indhold, og tryk Gem på iPad.';}else{el('slotHint').textContent='Tryk på et felt på iPad';el('form').style.display='none';}}});}
 var availableEntities=[];
 function refreshEntityList(){
  if(!sid||!key)return;
@@ -116,7 +120,7 @@ function populateEntitySelect(current){
  var known=false;
  for(var i=0;i<availableEntities.length;i++){
   var e=availableEntities[i];var recognized=['light','cover','media_player','switch','sensor'];
-  if(filter!=='all'&&!(filter==='other'&&recognized.indexOf(e.domain)===-1)&&e.domain!==filter)continue;
+  if(filter!=='all'&&!(filter==='other'&&recognized.indexOf(e.domain)===-1)&&e.domain!==filter&&!(filter==='switch'&&['fan','input_boolean'].indexOf(e.domain)>=0)&&!(filter==='sensor'&&['binary_sensor','climate'].indexOf(e.domain)>=0))continue;
   if(term&&(e.name+' '+e.id+' '+e.domain).toLocaleLowerCase().indexOf(term)===-1)continue;
   var o=document.createElement('option');o.value=e.id;o.textContent=e.name+' ('+e.id+')';select.appendChild(o);if(e.id===current)known=true;
  }
@@ -137,11 +141,22 @@ function populateRuleSelect(){
 el('ruleSearch').oninput=populateRuleSelect;
 el('ruleEntitySelect').onchange=function(){if(this.value)el('ruleEntity').value=this.value;};
 function syncQuickAction(){var a=el('quickAction').value;el('mediaOptions').style.display=a==='music'?'block':'none';el('advancedBox').open=a==='advanced';}
+function updateKindUI(){
+ var kind=el('kind').value,needsEntity=['light','switch','music','cover','sensor'].indexOf(kind)>=0;
+ el('entitySettings').style.display=needsEntity?'block':'none';
+ el('deviceFilter').value=kind==='switch'?'switch':kind==='light'?'light':kind==='cover'?'cover':kind==='music'?'media_player':kind==='sensor'?'sensor':'all';
+ el('mediaOptions').style.display='none';
+ el('legacyActions').style.display='none';
+ var descriptions={clock:'Uret vises uden ekstra indstillinger.',light:'Kort tryk tænder og slukker. Hold for lysstyrke og farve.',switch:'Kort tryk tænder og slukker.',music:'Kort tryk afspiller eller pauser. Hold for lydstyrke og skift nummer.',cover:'Kort tryk åbner eller lukker. Hold for præcis position.',sensor:'Viser sensorens aktuelle værdi.',text:'Viser teksten, du skriver.',empty:'Intet indhold.'};
+ el('kindHelp').textContent=descriptions[kind]||'';
+ populateEntitySelect(el('entity').value);
+}
+el('kind').onchange=updateKindUI;
 function inferQuick(w){if(!w)return 'toggle';if(w.type==='music')return 'music';if(w.type==='sensor')return 'sensor';if(w.actionType==='none'||w.type==='text'||w.type==='clock'||w.type==='empty')return 'none';if(w.actionType==='service'||w.actionType==='url'||w.actionType==='qr'||w.actionType==='saver')return 'advanced';return 'toggle';}
 el('loadEntities').onclick=refreshEntityList;
 el('deviceFilter').onchange=function(){populateEntitySelect(el('entity').value)};
 el('entitySearch').oninput=function(){populateEntitySelect(el('entity').value)};
-el('entitySelect').onchange=function(){el('entity').value=this.value;if(this.value.indexOf('media_player.')===0)el('quickAction').value='music';else if(this.value.indexOf('sensor.')===0||this.value.indexOf('binary_sensor.')===0)el('quickAction').value='sensor';else el('quickAction').value='toggle';syncQuickAction();};
+el('entitySelect').onchange=function(){el('entity').value=this.value;};
 el('quickAction').onchange=syncQuickAction;
 el('resetSetup').onclick=function(){
  if(!confirm('Vil du nulstille Liquid Home? Alle seks felter, baggrund og regler bliver slettet på iPad’en.'))return;
@@ -182,13 +197,19 @@ el('saveTapPhone').onclick=function(){if(closed)return;el('saveTapPhone').disabl
 req('POST','/api/liquid_home/update/'+encodeURIComponent(sid),{key:key,tap_action:el('tapActionPhone').value},function(ok,r){
 el('saveTapPhone').disabled=false;el('tapMessage').textContent=ok?'✓ Gemt! Tryk på iPad ændret.':(r.error||'Kunne ikke gemme');
 });};
-el('form').onsubmit=function(ev){ev.preventDefault();if(selected<0)return;var quick=el('quickAction').value,kind=el('kind').value,entity=el('entitySelect').value||el('entity').value.trim();
-if(quick==='music')kind='music';else if(quick==='sensor')kind='sensor';else if(quick==='toggle')kind='button';
-var widget={type:kind,label:el('label').value,value:el('value').value,entity:entity,service:el('service').value.trim(),actionType:el('tileAction').value,actionTarget:el('actionTarget').value.trim(),actionService:el('actionService').value.trim(),mediaSource:el('mediaSource').value.trim(),mediaType:el('mediaType').value};
-if(quick==='toggle'){widget.actionType='toggle';widget.actionTarget=entity;}
-else if(quick==='music'){widget.actionType='default';}
-else if(quick==='sensor'||quick==='none'){widget.actionType='none';}
-el('save').disabled=true;req('POST','/api/liquid_home/update/'+encodeURIComponent(sid),{key:key,widget:widget},function(ok,r){el('save').disabled=false;el('message').textContent=ok?'✓ Ændringen vises nu på iPad. Tryk på et nyt felt for at fortsætte.':(r.error||'Kunne ikke gemme');});};
+el('form').onsubmit=function(ev){
+ ev.preventDefault();if(selected<0)return;
+ var kind=el('kind').value,entity=(el('entitySelect').value||el('entity').value||'').trim();
+ var domain=entity.split('.')[0];
+ var allowed={light:['light'],switch:['switch','input_boolean','fan'],music:['media_player'],cover:['cover'],sensor:['sensor','binary_sensor','climate']};
+ if(allowed[kind]&&allowed[kind].indexOf(domain)<0){el('message').textContent='Vælg en Home Assistant enhed, der passer til typen '+kind+'.';return;}
+ var w={type:kind,label:el('label').value.trim(),value:el('value').value,entity:allowed[kind]?entity:'',
+ service:'',actionType:'default',actionTarget:'',actionService:'',mediaSource:'',mediaType:'music'};
+ el('save').disabled=true;
+ req('POST','/api/liquid_home/update/'+encodeURIComponent(sid),{key:key,widget:w},function(ok,r){
+  el('save').disabled=false;el('message').textContent=ok?'✓ Gemt! Tryk på feltet på iPad for at prøve det.':(r.error||'Kunne ikke gemme');
+ });
+};
 el('wizardNext').onclick=wizardAdvance;
 el('wizardBack').onclick=function(){showWizardStep(Math.max(0,wizardStep-1));};
 var choices=el('wizard').querySelectorAll('[data-bg]');for(var ci=0;ci<choices.length;ci++)choices[ci].onclick=function(){setWizardBgChoice(this.getAttribute('data-bg'));};
