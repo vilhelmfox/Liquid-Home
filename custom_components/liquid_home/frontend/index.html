@@ -1,0 +1,344 @@
+<!doctype html>
+<html lang="da"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="Liquid Home"><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"><meta name="theme-color" content="#172b36"><title>Liquid Home v1.5</title>
+<style>
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}html,body{width:100%;height:100%;margin:0;overflow:hidden;position:relative;overscroll-behavior:none;-webkit-overflow-scrolling:auto;font-family:-apple-system,BlinkMacSystemFont,"Helvetica Neue",Arial,sans-serif;color:white;background:#18384a}button,input,select{font:inherit}button{cursor:pointer}button:focus{outline-color:#cef4ff}
+#backdrop{position:fixed;top:0;right:0;bottom:0;left:0;background:linear-gradient(160deg,#7dbac0 0%,#668f9e 31%,#2d6c6c 60%,#102c37 100%);z-index:0;overflow:hidden}
+#scenery{position:absolute;top:0;right:0;bottom:0;left:0;background:radial-gradient(ellipse at 50% 20%,rgba(254,244,197,.7),transparent 26%),linear-gradient(145deg,transparent 52%,rgba(33,92,99,.65) 52.3%,transparent 80%),linear-gradient(30deg,transparent 48%,rgba(28,84,81,.65) 48.2%,transparent 85%);background-size:100% 100%}
+#bgPhoto{position:absolute;top:0;right:0;bottom:0;left:0;width:100%;height:100%;object-fit:cover;display:none}#veil{position:absolute;top:0;right:0;bottom:0;left:0;background:linear-gradient(to bottom,rgba(9,27,36,.14),rgba(5,19,29,.19) 52%,rgba(4,16,26,.55));pointer-events:none}
+.screen{position:absolute;top:0;right:0;bottom:0;left:0;z-index:1}#saver{display:flex;align-items:center;justify-content:center;flex-direction:column;cursor:pointer;text-align:center;user-select:none;-webkit-user-select:none}#saver:active{opacity:.94}
+/* Text itself is glass, with white fallback on older WebKit */
+#glassClock{color:rgba(245,252,255,.90);-webkit-text-fill-color:rgba(245,252,255,.90)}
+#glassClock{font-weight:200;font-size:120px;line-height:1;letter-spacing:-.085em;padding-right:.09em;background:linear-gradient(172deg,rgba(255,255,255,.94) 0%,rgba(246,254,255,.57) 32%,rgba(123,198,217,.36) 43%,rgba(249,253,255,.92) 60%,rgba(255,255,255,.40) 82%,rgba(255,255,255,.86) 100%);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;filter:drop-shadow(0 5px 3px rgba(0,0,0,.18)) drop-shadow(0 -1px 1px rgba(255,255,255,.25));text-shadow:0 10px 26px rgba(7,26,39,.12)}
+#glassDate{font-size:21px;font-weight:450;margin-top:13px;letter-spacing:.015em;color:rgba(246,251,255,.88);text-shadow:0 2px 12px rgba(2,15,24,.55)}
+#tapHint{position:absolute;bottom:calc(26px + env(safe-area-inset-bottom,0px));font-size:12px;letter-spacing:1.1px;color:rgba(255,255,255,.78)}
+#dashboard{display:none;padding:calc(14px + env(safe-area-inset-top,0px)) 16px calc(16px + env(safe-area-inset-bottom,0px));background:rgba(3,20,30,.30)}#head{height:64px;display:flex;align-items:center;justify-content:space-between;gap:8px}#head strong{font-size:21px;letter-spacing:-.5px}#head small{display:block;color:#cfe1e8;margin-top:3px}#headButtons{display:flex;gap:7px}.round{background:rgba(230,248,255,.17);border:1px solid rgba(255,255,255,.35);color:white;border-radius:22px;padding:10px 13px;min-width:43px;min-height:43px;box-shadow:inset 0 1px rgba(255,255,255,.28)}
+#grid{height:calc(100% - 64px);display:grid;grid-template-columns:repeat(3,1fr);grid-template-rows:repeat(2,1fr);gap:12px}.slot{min-height:0;min-width:0;position:relative;padding:19px;overflow:hidden;border-radius:26px;background:rgba(235,249,255,.14);border:1px solid rgba(255,255,255,.29);-webkit-backdrop-filter:blur(19px) saturate(140%);backdrop-filter:blur(19px) saturate(140%);box-shadow:0 10px 26px rgba(0,14,28,.16),inset 0 1px rgba(255,255,255,.29);color:white;display:flex;flex-direction:column;justify-content:space-between;text-align:left}.slot:active{background:rgba(255,255,255,.24)}.slot.empty{border:1px dashed rgba(255,255,255,.36);background:rgba(255,255,255,.06);align-items:center;justify-content:center;font-size:34px;color:rgba(255,255,255,.7)}.slot .ico{font-size:32px}.slot b{display:block;font-size:20px;font-weight:600;white-space:normal;overflow-wrap:break-word}.slot p{font-size:13px;line-height:1.3;opacity:.72;margin:5px 0 0}.slot .value{font-size:26px;font-weight:450;margin-top:10px}.slot .tinyClock{font-size:36px;font-weight:250;letter-spacing:-2px}.slot .editMark{position:absolute;right:12px;top:10px;font-size:14px;color:white;background:rgba(17,39,53,.58);border-radius:50%;padding:6px}.slot .musicbuttons{display:flex;gap:8px;margin-top:12px}.slot .musicbuttons button{background:rgba(255,255,255,.16);color:white;border:1px solid rgba(255,255,255,.28);border-radius:12px;padding:8px 11px}.slot.musicbox{background:rgba(170,202,255,.18)}
+#toastStack{position:absolute;left:50%;top:calc(20px + env(safe-area-inset-top,0px));transform:translateX(-50%);width:calc(100% - 28px);max-width:440px;z-index:8;pointer-events:none}.toast{padding:13px 17px;margin-bottom:8px;border-radius:24px;background:rgba(220,241,252,.26);-webkit-backdrop-filter:blur(25px);backdrop-filter:blur(25px);border:1px solid rgba(255,255,255,.53);box-shadow:0 14px 32px rgba(4,22,34,.25);display:flex;gap:12px;align-items:center}.toast .symbol{font-size:24px}.toast b{display:block;font-size:14px}.toast small{display:block;margin-top:4px;font-size:12px;color:rgba(255,255,255,.87)}
+
+#safariTip{position:absolute;bottom:7px;left:0;right:0;text-align:center;font-size:11px;opacity:.75;z-index:6;pointer-events:none}body.standalone #safariTip{display:none}
+@media(max-width:600px){#dashboard{padding-left:9px;padding-right:9px}#grid{gap:7px}.slot{padding:12px;border-radius:20px}.slot .ico{font-size:26px}.slot b{font-size:15px}.slot p{font-size:11px}.slot .value{font-size:20px}#head strong{font-size:18px}#head{height:60px}#grid{height:calc(100% - 60px)}.round{padding:8px}#glassClock{font-size:21vw}}
+
+/* iOS 12: avoid inset, min(), clamp() and modern viewport units */
+html,body{min-width:100%;min-height:100%;}
+#backdrop,.screen{width:100%;height:100%;}
+#saver{display:-webkit-flex;display:flex;-webkit-box-align:center;align-items:center;-webkit-box-pack:center;justify-content:center;}
+#glassClock{font-size:120px;max-width:96%;white-space:nowrap;}
+#glassDate{font-size:21px;}
+#scenery{background:radial-gradient(ellipse at 58% 18%,rgba(255,234,175,.8),transparent 27%),linear-gradient(180deg,#8ec7cd 0%,#aac9bc 44%,#708f8d 65%,#244458 100%)}
+.mountain{position:absolute;left:-10%;width:120%;height:49%;bottom:15%;pointer-events:none}
+.mountain.far{background:linear-gradient(155deg,transparent 41%,rgba(91,137,145,.9) 41.5%,rgba(60,106,123,.9) 65%,transparent 65.5%)}
+.mountain.near{bottom:0;height:51%;background:linear-gradient(30deg,#193e48 0%,#2a5961 35%,transparent 35.5%),linear-gradient(145deg,transparent 55%,#244954 55.5%,#10313e 100%)}
+.lake{position:absolute;left:0;right:0;bottom:0;height:25%;background:linear-gradient(180deg,rgba(139,192,181,.65),rgba(18,66,80,.6))}
+#glassClock{-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+@media(max-width:700px){#glassClock{font-size:86px}}
+@media(max-width:420px){#glassClock{font-size:66px}}
+
+#pairPanel{display:none;position:absolute;z-index:30;left:0;top:0;right:0;bottom:0;background:rgba(4,18,29,.96);overflow:hidden;padding:12px;color:#fff;text-align:center}
+#pairCard{max-width:520px;margin:2px auto;padding:12px;border-radius:25px;background:rgba(255,255,255,.10);border:1px solid rgba(255,255,255,.25)}
+#pairQR{width:185px;height:185px;background:white;border-radius:17px;padding:8px;margin:16px auto;display:block}
+#pairPanel h2{font-size:25px;margin:8px 0}#pairPanel p{font-size:14px;line-height:1.5;color:#d9ecf3}
+#pairPanel button{min-height:46px;padding:12px 18px;margin:8px;border-radius:17px;background:rgba(255,255,255,.18);color:#fff;border:1px solid rgba(255,255,255,.3)}
+body.pair-mode .slot{outline:3px solid rgba(180,245,255,.65)}body.pair-mode .slot.pair-selected{outline:4px solid #fff;background:rgba(180,245,255,.24)}
+
+/* Locked kiosk view: never scroll the iPad page, even by touch overscroll. */
+body{position:fixed;top:0;right:0;bottom:0;left:0;width:100%;height:100%;overflow:hidden;touch-action:none}
+#saver,#dashboard,#grid,#pairPanel{touch-action:none}
+#lightOverlay{display:none;position:absolute;top:0;right:0;bottom:0;left:0;z-index:40;background:rgba(2,13,25,.79);-webkit-backdrop-filter:blur(18px);backdrop-filter:blur(18px);align-items:center;justify-content:center;padding:12px}
+#lightCard{width:100%;max-width:460px;padding:22px;border-radius:28px;border:1px solid rgba(255,255,255,.35);background:rgba(55,82,101,.93);box-shadow:0 18px 48px rgba(0,0,0,.4)}
+#lightCard h2{font-size:24px;margin:0 0 6px}#lightCard p{font-size:12px;color:#d6eafa;margin:0 0 14px}
+.lightLabel{font-size:15px;margin:13px 0 7px;display:flex;justify-content:space-between}
+#lightCard input[type=range]{display:block;width:100%;height:34px;touch-action:auto;-webkit-appearance:none;appearance:none;background:transparent}
+#lightCard input[type=range]::-webkit-slider-runnable-track{height:12px;border-radius:12px;background:linear-gradient(90deg,#152938,#fff)}
+#lightCard #lightHue::-webkit-slider-runnable-track{background:linear-gradient(90deg,red,#ff0,lime,cyan,blue,magenta,red)}
+#lightCard input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:27px;height:27px;margin-top:-8px;border-radius:50%;border:3px solid white;background:#e4f6ff;box-shadow:0 2px 10px #0007}
+.lightActions{display:flex;gap:10px;margin-top:18px}.lightActions button{flex:1;min-height:49px;border-radius:16px;color:white;background:rgba(255,255,255,.18);border:1px solid rgba(255,255,255,.23)}
+.lightActions #lightApply{background:rgba(187,228,255,.35)}
+#lightFeedback{font-size:12px;min-height:18px;margin-top:11px;color:#dbf6dc}
+@media(max-height:570px){#lightCard{padding:14px}#lightCard h2{font-size:19px}#lightCard p{margin-bottom:7px}.lightLabel{margin:6px 0 3px}.lightActions{margin-top:9px}}
+
+#curtainOverlay{display:none;position:absolute;top:0;right:0;bottom:0;left:0;z-index:42;background:rgba(2,13,25,.83);-webkit-backdrop-filter:blur(18px);backdrop-filter:blur(18px);align-items:center;justify-content:center;padding:12px}
+#curtainCard{width:100%;max-width:460px;padding:22px;border-radius:28px;border:1px solid rgba(255,255,255,.35);background:rgba(55,82,101,.96);box-shadow:0 18px 48px rgba(0,0,0,.4)}
+#curtainCard h2{margin:0 0 8px;font-size:24px}#curtainCard p{color:#cfe6f6;font-size:13px;line-height:1.4}
+#curtainPosition{display:block;width:100%;height:38px;-webkit-appearance:none;appearance:none;background:transparent;touch-action:auto}
+#curtainPosition::-webkit-slider-runnable-track{height:13px;border-radius:14px;background:linear-gradient(90deg,#40678a,#d9effe)}
+#curtainPosition::-webkit-slider-thumb{-webkit-appearance:none;width:28px;height:28px;margin-top:-8px;border-radius:50%;border:3px solid white;background:#b8dcff}
+#curtainCard .lightActions button{font-size:14px}
+#setupIntro{font-size:16px;font-weight:650;margin-bottom:4px;display:none}
+body.first-run #setupIntro{display:block}
+body.first-run #pairEnd{display:none}
+@media(max-height:540px){#curtainCard{padding:13px}#curtainCard h2{font-size:20px}}
+
+/* Gentle iOS 12-compatible motion, never scroll the kiosk screen */
+@-webkit-keyframes liquidAppear{from{opacity:0;-webkit-transform:translateY(13px) scale(.97)}to{opacity:1;-webkit-transform:translateY(0) scale(1)}}
+@keyframes liquidAppear{from{opacity:0;transform:translateY(13px) scale(.97)}to{opacity:1;transform:translateY(0) scale(1)}}
+@-webkit-keyframes liquidFloat{0%,100%{-webkit-transform:translateY(0)}50%{-webkit-transform:translateY(-5px)}}
+@keyframes liquidFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-5px)}}
+@-webkit-keyframes liquidToast{from{opacity:0;-webkit-transform:translateY(-16px)}to{opacity:1;-webkit-transform:translateY(0)}}
+@keyframes liquidToast{from{opacity:0;transform:translateY(-16px)}to{opacity:1;transform:translateY(0)}}
+#glassClock{-webkit-animation:liquidAppear .65s ease-out;animation:liquidAppear .65s ease-out}
+#glassDate{-webkit-animation:liquidAppear .85s ease-out;animation:liquidAppear .85s ease-out}
+#dashboard .slot{-webkit-animation:liquidAppear .36s ease-out both;animation:liquidAppear .36s ease-out both;-webkit-transition:background .2s ease,-webkit-transform .2s ease;transition:background .2s ease,transform .2s ease}
+#dashboard .slot:nth-child(2){-webkit-animation-delay:.04s;animation-delay:.04s}#dashboard .slot:nth-child(3){-webkit-animation-delay:.08s;animation-delay:.08s}#dashboard .slot:nth-child(4){-webkit-animation-delay:.12s;animation-delay:.12s}#dashboard .slot:nth-child(5){-webkit-animation-delay:.16s;animation-delay:.16s}#dashboard .slot:nth-child(6){-webkit-animation-delay:.20s;animation-delay:.20s}
+.slot:active{-webkit-transform:scale(.96);transform:scale(.96)}
+.toast{-webkit-animation:liquidToast .32s ease-out;animation:liquidToast .32s ease-out}
+#pairCard,#lightCard,#curtainCard{-webkit-animation:liquidAppear .33s ease-out;animation:liquidAppear .33s ease-out}
+button{-webkit-transition:opacity .15s ease,-webkit-transform .18s ease;transition:opacity .15s ease,transform .18s ease}
+button:active{-webkit-transform:scale(.97);transform:scale(.97)}
+#musicOverlay{display:none;position:absolute;top:0;right:0;bottom:0;left:0;z-index:44;background:rgba(2,13,25,.83);-webkit-backdrop-filter:blur(16px);backdrop-filter:blur(16px);align-items:center;justify-content:center;padding:12px}
+#musicCard{width:100%;max-width:480px;padding:20px;border-radius:26px;border:1px solid rgba(255,255,255,.34);background:rgba(48,70,91,.96)}
+#musicCard h2{margin:4px 0 8px;font-size:25px}#musicCard p{font-size:13px;color:#d6eafa;line-height:1.45}
+#musicCard .musicRow{display:flex;justify-content:space-around;margin:14px 0;gap:12px}
+#musicCard button{padding:11px 15px;background:rgba(255,255,255,.19);border:1px solid rgba(255,255,255,.25);border-radius:14px;color:white;min-height:43px}
+#musicCard .musicRow button{flex:1;font-size:20px}
+#musicCard #musicPlayMedia{width:100%;background:rgba(205,238,255,.28)}
+@media(prefers-reduced-motion:reduce){*{-webkit-animation:none!important;animation:none!important;-webkit-transition:none!important;transition:none!important}}
+</style></head><body>
+<div id="backdrop"><div id="scenery"></div><div class="mountain far"></div><div class="mountain near"></div><div class="lake"></div><img id="bgPhoto" alt=""><div id="veil"></div></div>
+<div id="saver" class="screen" role="button" tabindex="0" aria-label="Pauseskærm"><div id="glassClock">12:45</div><div id="glassDate"></div><div id="tapHint">Tryk for at åbne dashboardet</div></div>
+<div id="dashboard" class="screen"><div id="head"><div><strong>Liquid Home</strong><small>Tilpas med telefonen</small></div><div id="headButtons"><button class="round" id="editBtn" title="Rediger med telefon">▦</button><button class="round" id="sleepBtn" title="Tilbage til pauseskærm">◌</button></div></div><div id="grid"></div></div>
+<div id="toastStack" aria-live="polite"></div><div id="safariTip">Fjern Safari-toppen: Del → Føj til hjemmeskærm, åbn derefter ikonet</div>
+<div id="pairPanel"><div id="pairCard"><div id="setupIntro">Velkommen til Liquid Home</div><h2 id="pairTitle">Tilpas med telefonen</h2><p><b>1.</b> Scan QR koden med din telefon.<br><b>2.</b> Luk dette vindue, og tryk på det felt på iPad'en, du vil ændre.<br><b>3.</b> Vælg indhold og gem på telefonen.</p><img id="pairQR" alt="QR kode til telefonens editor"><p id="pairStatus">Opretter sikker forbindelse …</p><button id="pairContinue" type="button">Åbn dashboard / Vælg felt →</button><button id="pairEnd" type="button">Afslut redigering</button></div></div>
+<div id="lightOverlay" role="dialog" aria-label="Avanceret lysstyring">
+<div id="lightCard">
+<h2 id="lightTitle">Lys</h2>
+<p>Hold på et lysfelt for at åbne dette panel. Tryk kort på feltet for tænd/sluk.</p>
+<label class="lightLabel" for="lightBrightness"><span>Lysstyrke</span><b id="lightBrightnessValue">75 %</b></label>
+<input id="lightBrightness" type="range" min="1" max="100" value="75">
+<label class="lightLabel" for="lightHue"><span>Farve</span><b id="lightHueValue">180°</b></label>
+<input id="lightHue" type="range" min="0" max="360" value="180">
+<div class="lightActions"><button id="lightClose" type="button">Luk</button><button id="lightApply" type="button">Anvend</button></div>
+<div id="lightFeedback" aria-live="polite"></div>
+</div></div>
+<div id="curtainOverlay" role="dialog" aria-label="Avanceret gardinstyring"><div id="curtainCard">
+<h2 id="curtainTitle">Gardiner</h2><p>Kort tryk: Åbn eller luk. Langt tryk: Vælg præcis position.</p>
+<div class="lightLabel"><span>Åbning</span><b id="curtainPercent">50 %</b></div>
+<input type="range" min="0" max="100" value="50" id="curtainPosition">
+<div class="lightActions"><button id="curtainCloseAll">Luk helt</button><button id="curtainOpenAll">Åbn helt</button></div>
+<div class="lightActions"><button id="curtainDismiss">Tilbage</button><button id="curtainApply">Anvend position</button></div>
+<div id="curtainFeedback" class="muted" style="margin-top:9px;font-size:12px"></div>
+</div></div><div id="musicOverlay" role="dialog" aria-label="Musikstyring"><div id="musicCard">
+<div style="color:#bde4ff;font-size:12px;letter-spacing:2px">MUSIK</div><h2 id="musicPlayerTitle">Musik</h2>
+<p id="musicNowPlaying">Vælg en medieafspiller på telefonen.</p>
+<div class="musicRow"><button type="button" id="musicPrev">⏮</button><button type="button" id="musicToggle">⏯</button><button type="button" id="musicNext">⏭</button></div>
+<button id="musicPlayMedia" type="button">▶ Afspil valgt sang eller playliste</button>
+<div id="musicFeedback" style="font-size:12px;min-height:21px;margin:10px 0"></div>
+<button id="musicDismiss" type="button">Luk</button>
+</div></div>
+<script>
+(function(){'use strict';
+var KEY='liquid_home_v05',defaults={slots:[{type:'empty'},{type:'empty'},{type:'empty'},{type:'empty'},{type:'empty'},{type:'empty'}],rules:[],bg:'',idle:2,tapAction:'dashboard',backgroundMode:'default',setupComplete:false,natureIndex:-1,natureChangedAt:0};
+var musicStates={},config=defaults,token='',deviceId='',deviceKey='',states={},baseline=false,lastTouch=Date.now(),screen='saver',polling=false;
+try{var savedAuth=JSON.parse(localStorage.getItem('liquid_home_access')||'null');if(savedAuth&&savedAuth.id&&savedAuth.key){deviceId=savedAuth.id;deviceKey=savedAuth.key;token='local';}}catch(e){}
+var virginInstall=true;var pair={active:false,id:'',key:'',selected:-1,rev:0,busy:false};
+function el(id){return document.getElementById(id)}
+function escape(s){return String(s===undefined?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(config));return true;}catch(e){toast('Kunne ikke gemme','Billedet kan være for stort. Prøv et mindre foto.','⚠');return false;}}
+function load(){try{var s=JSON.parse(localStorage.getItem(KEY));if(s&&s.slots&&s.slots.length===6){virginInstall=false;config=s;config.rules=config.rules||[];config.idle=config.idle===undefined?2:config.idle;config.bg=config.bg||'';config.tapAction=['dashboard','qr','none'].indexOf(config.tapAction)>=0?config.tapAction:'dashboard';if(!config.backgroundMode)config.backgroundMode='custom';if(config.setupComplete===undefined)config.setupComplete=true;}}catch(e){}}
+function clock(){var d=new Date();var t=('0'+d.getHours()).slice(-2)+':'+('0'+d.getMinutes()).slice(-2);el('glassClock').textContent=t;el('glassDate').textContent=d.toLocaleDateString('da-DK',{weekday:'long',day:'numeric',month:'long'});var cl=document.getElementsByClassName('tinyClock');for(var i=0;i<cl.length;i++)cl[i].textContent=t;}
+function tapDescription(){var a=config.tapAction||'dashboard';return a==='dashboard'?'Tryk for at åbne dashboardet':a==='qr'?'Tryk for QR kode':'Hold fingeren nede for QR kode';}
+function updateTapHint(){el('tapHint').textContent=tapDescription();}
+function performSaverTap(){var a=config.tapAction||'dashboard';if(a==='qr')startPair();else if(a==='dashboard')setScreen('dashboard');}
+function setScreen(which){screen=which;el('saver').style.display=which==='saver'?'flex':'none';el('dashboard').style.display=which==='dashboard'?'block':'none';lastTouch=Date.now();if(which==='dashboard')draw();}
+function toast(title,body,icon){var d=document.createElement('div');d.className='toast';d.innerHTML='<span class="symbol">'+escape(icon||'🔔')+'</span><span><b>'+escape(title)+'</b><small>'+escape(body||'')+'</small></span>';el('toastStack').appendChild(d);setTimeout(function(){if(d.parentNode)d.parentNode.removeChild(d);},4800);}
+function setBackground(url){if(!url){el('bgPhoto').style.display='none';el('bgPhoto').removeAttribute('src');return;}var img=new Image();img.onload=function(){el('bgPhoto').src=url;el('bgPhoto').style.display='block';};img.onerror=function(){if(config.backgroundMode==='nature'){/* Keep the previous successfully loaded image. */}else el('bgPhoto').style.display='none';};img.src=url;}
+function cycleNature(force){
+ if(config.backgroundMode!=='nature')return;
+ var now=Date.now(),elapsed=now-(Number(config.natureChangedAt)||0);
+ if(!force&&elapsed<3600000)return;
+ var next=(Number(config.natureIndex)||0)+1;next=(next+nature.length)%nature.length;
+ /* Try fixed nature JPEG URLs; the built-in mountain landscape is the offline fallback. */
+ config.natureIndex=next;config.natureChangedAt=now;save();setBackground(nature[next]);
+}
+function applyBackground(){if(config.backgroundMode==='nature'){if(config.natureIndex>=0&&config.natureIndex<nature.length)setBackground(nature[config.natureIndex]);cycleNature(config.natureIndex<0);}else if(config.backgroundMode==='custom')setBackground(config.bg);else setBackground('');}
+
+function tileService(entity,svc){
+ var parts=(svc||'').split('.');if(!entity||parts.length!==2||!/^[a-z0-9_]+$/.test(parts[0])||!/^[a-z0-9_]+$/.test(parts[1])){toast('Ugyldig handling','Angiv enhed og service, fx light.toggle.','⚠');return;}
+ request('POST','services/'+parts[0]+'/'+parts[1],{entity_id:entity},function(ok){toast(ok?'Handling udført':'Kunne ikke styre enheden',entity,ok?'✓':'⚠');});
+}
+function performTileAction(w,i,ev){
+ var a=w.actionType||'default',target=(w.actionTarget||w.entity||'').trim();
+ if(a==='none')return;
+ if(a==='toggle'){var domain=target.split('.')[0];if(!/^(light|switch|fan|input_boolean|cover)$/.test(domain)){toast('Vælg en kontakt eller et lys','Indsæt fx light.stue som enhed.','⚠');return;}if(domain==='cover'){toggleCurtain(target);return;}tileService(target,domain+'.toggle');return;}
+ if(a==='service'){tileService(target,w.actionService||w.service);return;}
+ if(a==='url'){if(!/^https?:\/\//i.test(target)){toast('Ugyldig adresse','Brug en adresse der begynder med https://','⚠');return;}window.location.href=target;return;}
+ if(a==='saver'){setScreen('saver');return;}
+ if(a==='settings'){startPair();return;}
+ if(a==='qr'){startPair();return;}
+ /* Standard opførsel */
+ if(w.type==='button'&&isCurtainTile(w))toggleCurtain(curtainTarget(w));else if(w.type==='button')runAction(w);
+ else if(w.type==='empty'||w.type==='text'||w.type==='sensor'||w.type==='clock')return;
+}
+var activeMusicWidget=null;var holdTimer=null,holdConsumed=false,lightEntity='',lightTitle='',curtainEntity='',lightStartX=0,lightStartY=0;
+function isLightTile(w){
+ var entity=(w.actionType==='toggle'?(w.actionTarget||w.entity):w.entity)||'';
+ return /^light\.[a-z0-9_]+$/.test(entity)&&
+   (w.actionType==='toggle'||(w.actionType||'default')==='default'&&w.type==='button');
+}
+function curtainTarget(w){return (w.actionType==='toggle'?(w.actionTarget||w.entity):w.entity)||'';}
+function isCurtainTile(w){var e=curtainTarget(w);return /^cover\.[a-z0-9_]+$/.test(e)&&(w.actionType==='toggle'||(w.actionType||'default')==='default'&&w.type==='button');}
+function toggleCurtain(entity){
+ var current=states[entity];var svc=(current==='open'||current==='opening')?'close_cover':'open_cover';
+ request('POST','services/cover/'+svc,{entity_id:entity},function(ok){toast(ok?'Gardiner opdateret':'Gardiner kunne ikke styres',entity,ok?'✓':'⚠');});
+}
+function openCurtain(w){curtainEntity=curtainTarget(w);el('curtainTitle').textContent=w.label||'Gardiner';el('curtainFeedback').textContent='Vælg åbning fra 0 % (lukket) til 100 % (åbent).';el('curtainOverlay').style.display='flex';lastTouch=Date.now();}
+function closeCurtain(){el('curtainOverlay').style.display='none';curtainEntity='';lastTouch=Date.now();}
+function curtainService(svc,position){if(!curtainEntity)return;var body={entity_id:curtainEntity};if(typeof position==='number')body.position=position;request('POST','services/cover/'+svc,body,function(ok){el('curtainFeedback').textContent=ok?'✓ Kommando sendt':'Kunne ikke styre gardinet. Kontrollér forbindelsen og funktionerne på enheden.';});}
+function lightRGB(h){
+ h=Number(h)%360;var x=1-Math.abs((h/60)%2-1);
+ var v=h<60?[1,x,0]:h<120?[x,1,0]:h<180?[0,1,x]:h<240?[0,x,1]:h<300?[x,0,1]:[1,0,x];
+ return [Math.round(v[0]*255),Math.round(v[1]*255),Math.round(v[2]*255)];
+}
+function openLight(w){
+ lightEntity=(w.actionType==='toggle'?(w.actionTarget||w.entity):w.entity)||'';
+ lightTitle=w.label||'Lys';
+ el('lightTitle').textContent=lightTitle;
+ el('lightFeedback').textContent='Indstillingerne styres her. Opsætning af feltet sker på telefonen.';
+ el('lightOverlay').style.display='flex';
+ lastTouch=Date.now();
+}
+function closeLight(){el('lightOverlay').style.display='none';lightEntity='';lastTouch=Date.now();}
+function bindHold(d,w){
+ if(!isLightTile(w)&&!isCurtainTile(w))return;
+ d.addEventListener('touchstart',function(ev){
+   if(pair.active||el('lightOverlay').style.display==='flex'||el('curtainOverlay').style.display==='flex')return;
+   var t=ev.touches&&ev.touches[0];if(!t)return;
+   lightStartX=t.clientX;lightStartY=t.clientY;holdConsumed=false;
+   if(holdTimer)clearTimeout(holdTimer);
+   holdTimer=setTimeout(function(){holdConsumed=true;holdTimer=null;if(isCurtainTile(w))openCurtain(w);else openLight(w);},650);
+ },false);
+ d.addEventListener('touchmove',function(ev){
+   var t=ev.touches&&ev.touches[0];
+   if(t&&(Math.abs(t.clientX-lightStartX)>12||Math.abs(t.clientY-lightStartY)>12)){if(holdTimer)clearTimeout(holdTimer);holdTimer=null;}
+ },false);
+ function endHold(){if(holdTimer)clearTimeout(holdTimer);holdTimer=null;}
+ d.addEventListener('touchend',endHold,false);
+ d.addEventListener('touchcancel',endHold,false);
+ d.addEventListener('contextmenu',function(ev){ev.preventDefault();if(!pair.active){holdConsumed=true;if(isCurtainTile(w))openCurtain(w);else openLight(w);}},false);
+}
+function renderSlot(i){var w=config.slots[i]||{type:'empty'},e=w.entity||'',st=states[e],html='',n=w.label||'';switch(w.type){case 'clock':html='<span class="ico">◷</span><div><div class="tinyClock"></div><p>'+escape(n||'Ur')+'</p></div>';break;case 'text':html='<span class="ico">✦</span><div><b>'+escape(n||'Tekst')+'</b><p>'+escape(w.value||'')+'</p></div>';break;case 'sensor':html='<span class="ico">◉</span><div><b>'+escape(n||'Sensor')+'</b><div class="value">'+escape(st===undefined?'—':st)+'</div><p>'+escape(e)+'</p></div>';break;case 'button':html='<span class="ico">◉</span><div><b>'+escape(n||'Knap')+'</b><p>'+escape(st===undefined?'Tryk for handling':st)+'</p></div>';break;case 'music':var ms=musicStates[e]||{};html='<span class="ico">♫</span><div><b>'+escape(n||'Musik')+'</b><p>'+escape(ms.title||'Vælg en afspiller')+'</p><p>'+escape(ms.artist||'')+'</p><div class="musicbuttons"><button type="button" data-music="previous">⏮</button><button type="button" data-music="toggle">'+(st==='playing'?'⏸':'▶')+'</button><button type="button" data-music="next">⏭</button></div></div>';break;default:html='<span>＋</span>';}
+var d=document.createElement(w.type==='music'?'div':'button');if(w.type==='music'){d.setAttribute('role','button');d.tabIndex=0;}d.className='slot '+(w.type==='empty'?'empty ':'')+(w.type==='music'?'musicbox':'');d.type='button';d.innerHTML=html;d.onclick=function(ev){if(holdConsumed){holdConsumed=false;return;}if(pair.active){selectForPhone(i);return;}var action=ev.target.getAttribute('data-music');if(action){musicAction(w,action);return;}if(w.type==='music'){openMusic(w);return;}performTileAction(w,i,ev);};bindHold(d,w);return d;}
+function draw(){var g=el('grid');g.innerHTML='';for(var i=0;i<6;i++){var cell=renderSlot(i);if(pair.active&&pair.selected===i)cell.className+=' pair-selected';g.appendChild(cell);}clock();}
+function request(method,path,obj,cb){if(!deviceId||!deviceKey){cb(false,null);return;}
+var x=new XMLHttpRequest(),p=path,body=obj;
+if(path==='')p='check';else if(path==='states')p='states';else if(path.indexOf('services/')===0){var parts=path.split('/');p='service';body={domain:parts[1],service:parts[2],data:obj};}
+else {cb(false,null);return;}
+x.open(method,'/api/liquid_home/device/'+encodeURIComponent(deviceId)+'/'+p,true);x.setRequestHeader('X-Liquid-Key',deviceKey);
+if(body!==null)x.setRequestHeader('Content-Type','application/json');
+x.onreadystatechange=function(){if(x.readyState===4){var parsed=null;try{parsed=JSON.parse(x.responseText);}catch(e){}cb(x.status>=200&&x.status<300,parsed);}};
+x.onerror=function(){cb(false,null)};x.send(body===null?null:JSON.stringify(body));}
+function runAction(w){if(!w.entity||!w.service){toast('Konfiguration mangler','Udfyld entity ID og service under Rediger.','⚙');return;}var a=w.service.split('.');if(a.length!==2||!(/^[a-z0-9_]+$/.test(a[0])&&/^[a-z0-9_]+$/.test(a[1]))){toast('Ugyldig service','Skriv fx light.toggle.','⚠');return;}request('POST','services/'+a[0]+'/'+a[1],{entity_id:w.entity},function(ok){toast(ok?'Handling sendt':'Kunne ikke udføre handling',w.label||w.entity,ok?'✓':'⚠');});}
+function openMusic(w){activeMusicWidget=w;el('musicPlayerTitle').textContent=w.label||'Musik';var info=musicStates[w.entity]||{};el('musicNowPlaying').textContent=(info.title||'Ingen sanginfo')+(info.artist?' · '+info.artist:'');el('musicPlayMedia').style.display=w.mediaSource?'block':'none';el('musicFeedback').textContent='Afspiller og sang vælges i telefoneditoren.';el('musicOverlay').style.display='flex';lastTouch=Date.now();}
+function closeMusic(){el('musicOverlay').style.display='none';activeMusicWidget=null;lastTouch=Date.now();}
+function playConfiguredMedia(w){if(!w||!w.entity||!w.mediaSource)return;request('POST','services/media_player/play_media',{entity_id:w.entity,media_content_id:w.mediaSource,media_content_type:w.mediaType||'music'},function(ok){el('musicFeedback').textContent=ok?'✓ Afspilning sendt':'Kunne ikke afspille. Tjek at medieafspilleren understøtter dette medielink.';});}
+function musicAction(w,a){if(!w.entity){toast('Vælg en afspiller','Vælg en afspiller via telefonen.','♫');return;}var service=a==='previous'?'media_previous_track':a==='next'?'media_next_track':'media_play_pause';request('POST','services/media_player/'+service,{entity_id:w.entity},function(ok){toast(ok?'Musik opdateret':'Musik kunne ikke styres',w.label||'Afspiller','♫');});}
+function readStates(){if(!deviceKey||polling||document.hidden)return;polling=true;request('GET','states',null,function(ok,result){polling=false;if(!ok||!result||!result.length){toast('Home Assistant','Forbindelsen er afbrudt.','⚠');return;}var next={};for(var i=0;i<result.length;i++){next[result[i].entity_id]=result[i].state;if(result[i].entity_id.indexOf('media_player.')===0){var a=result[i].attributes||{};musicStates[result[i].entity_id]={title:a.media_title||'',artist:a.media_artist||'',source:a.source||''};}}if(baseline){for(var j=0;j<config.rules.length;j++){var r=config.rules[j];if(Object.prototype.hasOwnProperty.call(states,r.entity)&&states[r.entity]!==next[r.entity]&&next[r.entity]===r.state)toast(r.title,r.body||'', '🔔');}}states=next;baseline=true;if(screen==='dashboard')draw();});}
+var nature=[
+'https://images.unsplash.com/photo-1470770841072-f978cf4d019e?w=1300&q=75',
+'https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=1300&q=75',
+'https://images.unsplash.com/photo-1501785888041-af3ef285b470?w=1300&q=75',
+'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=1300&q=75'
+];var natureCursor=0;
+
+function pairRequest(method,path,obj,cb){var x=new XMLHttpRequest();x.open(method,'/api/liquid_home/'+path,true);if(obj!==null)x.setRequestHeader('Content-Type','application/json');x.onreadystatechange=function(){if(x.readyState===4){var data={};try{data=JSON.parse(x.responseText)}catch(e){}cb(x.status>=200&&x.status<300,data)}};x.onerror=function(){cb(false,{error:'Netværksfejl'})};x.send(obj===null?null:JSON.stringify(obj))}
+function startPair(){
+ if(pair.active){el('pairPanel').style.display='block';return;}
+ el('pairPanel').style.display='block';el('pairStatus').textContent='Opretter forbindelse …';if(!config.setupComplete){document.body.className+=' first-run';el('pairTitle').textContent='Scan QR koden for at komme i gang';}
+ pairRequest('POST','new',{settings:{tapAction:config.tapAction,idle:config.idle,rules:config.rules,backgroundMode:config.backgroundMode,setupComplete:config.setupComplete},widgets:config.slots},function(ok,r){
+  if(!ok){el('pairStatus').textContent='Forbindelsen kræver Liquid Home integrationen på Home Assistant. Kontrollér, at den er installeret, og at Home Assistant er genstartet.';el('pairQR').style.display='none';return;}
+  pair.active=true;pair.id=r.id;pair.key=r.ipad_key;pair.rev=0;pair.selected=-1;
+  el('pairQR').style.display='block';el('pairQR').src=r.qr;
+  el('pairStatus').textContent='QR koden virker i 15 minutter. Telefonen skal være på samme Home Assistant adresse.';
+  document.body.className+=' pair-mode';draw();
+ });
+}
+function selectForPhone(index){
+ if(!pair.active)return;
+ pairRequest('POST','select/'+encodeURIComponent(pair.id),{key:pair.key,slot:index},function(ok,r){
+  if(!ok){toast('Valg mislykkedes',r.error||'Forbindelsen er udløbet','⚠');return;}
+  pair.selected=index;draw();toast('Felt '+(index+1)+' valgt','Ret feltet på telefonen og gem.','✎');
+ });
+}
+function pollPhoneChanges(){
+ if(!pair.active||pair.busy)return;
+ pair.busy=true;
+ pairRequest('GET','state/'+encodeURIComponent(pair.id)+'?key='+encodeURIComponent(pair.key)+'&since='+pair.rev,null,function(ok,r){
+  pair.busy=false;if(!ok){pair.active=false;document.body.className=document.body.className.replace(' pair-mode','');toast('Redigering udløbet','Scan en ny QR kode for at fortsætte','⚠');return;}
+  pair.rev=r.revision||0;
+  var updates=r.updates||[];
+  for(var j=0;j<updates.length;j++){
+   var u=updates[j];
+   if(u.type==='tap_action'&&['dashboard','qr','none'].indexOf(u.value)>=0){config.tapAction=u.value;save();updateTapHint();toast('Trykhandling opdateret','Ændret fra telefonen.','✓');}
+   else if(u.type==='idle'){config.idle=u.value;save();toast('Pauseskærm','Tid gemt fra telefonen.','✓');}
+   else if(u.type==='rules'){config.rules=u.value;save();toast('Notifikationer opdateret','Regler gemt fra telefonen.','✓');}
+   else if(u.type==='test_notification'){toast(u.title,u.body,'🔔');}
+   else if(u.type==='background'){var previous=config.bg;config.bg=u.value;config.backgroundMode=u.value?'custom':'default';if(save())applyBackground();else config.bg=previous;}
+   else if(u.type==='background_mode'){config.backgroundMode=u.value;config.natureIndex=-1;config.natureChangedAt=0;save();applyBackground();}
+   else if(u.type==='reset_all'){try{localStorage.removeItem(KEY);}catch(e){}config=JSON.parse(JSON.stringify(defaults));token='';deviceId='';deviceKey='';try{localStorage.removeItem('liquid_home_access');}catch(e){}states={};musicStates={};baseline=false;virginInstall=true;save();updateTapHint();applyBackground();draw();setScreen('saver');document.body.className+=' first-run';el('pairTitle').textContent='Scan QR koden for at komme i gang';el('pairPanel').style.display='block';toast('Nulstillet','Start opsætningen på telefonen.','✓');}
+   else if(u.type==='setup_complete'){config.setupComplete=true;save();document.body.className=document.body.className.replace(' first-run','');el('pairPanel').style.display='none';setScreen('saver');toast('Klar!','Din Liquid Home er sat op. Tryk på uret for dashboardet.','✓');}
+   else if(u.type==='device_authorization'){
+      deviceId=u.id;deviceKey=u.key;token='local';
+      try{localStorage.setItem('liquid_home_access',JSON.stringify({id:deviceId,key:deviceKey}));}catch(e){}
+      baseline=false;states={};toast('Home Assistant forbundet','Serveren styrer enhederne direkte.','✓');readStates();
+   }
+   else if(u.type==='ha_token'){
+     if(location.protocol!=='https:'){toast('HTTPS nødvendigt','Home Assistant token blev ikke overført.','🔒');}
+     else {token=u.value;baseline=false;states={};request('GET','',null,function(ok){if(ok){toast('Home Assistant forbundet','Kommandoer og sensorer er aktiveret.','✓');readStates();}else{token='';toast('Forbindelsen fejlede','Kontrollér tokenet i telefonen.','⚠');}});}
+   }
+   else if(u.type==='ha_disconnect'){token='';deviceKey='';deviceId='';try{localStorage.removeItem('liquid_home_access');}catch(e){}states={};baseline=false;toast('Afbrudt','Home Assistant er afbrudt.','◌');}
+   else if(u.slot>=0&&u.slot<6){config.slots[u.slot]=u.widget;save();toast('Felt '+(u.slot+1)+' opdateret','Gemt fra telefonen.','✓');}
+  }
+  if(updates.length)draw();
+ });
+}
+function endPair(){pair.active=false;pair.id='';pair.key='';pair.selected=-1;el('pairPanel').style.display='none';document.body.className=document.body.className.replace(' pair-mode','');draw();}
+el('pairContinue').onclick=function(){el('pairPanel').style.display='none';setScreen('dashboard');};
+el('pairEnd').onclick=endPair;
+
+var saverHold=null,saverHeld=false;
+function cancelSaverHold(){if(saverHold){clearTimeout(saverHold);saverHold=null;}}
+el('saver').addEventListener('touchstart',function(){cancelSaverHold();saverHeld=false;saverHold=setTimeout(function(){saverHeld=true;startPair();},3000);},{passive:true});
+el('saver').addEventListener('touchend',cancelSaverHold,false);
+el('saver').addEventListener('touchcancel',cancelSaverHold,false);
+el('saver').addEventListener('touchmove',cancelSaverHold,false);
+el('saver').onclick=function(){if(saverHeld){saverHeld=false;return;}performSaverTap();};
+el('saver').onkeydown=function(ev){if(ev.key==='Enter'||ev.key===' '){ev.preventDefault();performSaverTap();}};
+el('curtainDismiss').onclick=closeCurtain;
+el('curtainOverlay').onclick=function(ev){if(ev.target===el('curtainOverlay'))closeCurtain();};
+el('curtainPosition').oninput=function(){el('curtainPercent').textContent=this.value+' %';};
+el('curtainCloseAll').onclick=function(){curtainService('close_cover');el('curtainPosition').value=0;el('curtainPercent').textContent='0 %';};
+el('curtainOpenAll').onclick=function(){curtainService('open_cover');el('curtainPosition').value=100;el('curtainPercent').textContent='100 %';};
+el('curtainApply').onclick=function(){curtainService('set_cover_position',Number(el('curtainPosition').value));};
+el('lightClose').onclick=closeLight;
+el('lightOverlay').onclick=function(ev){if(ev.target===el('lightOverlay'))closeLight();};
+el('lightBrightness').oninput=function(){el('lightBrightnessValue').textContent=this.value+' %';};
+el('lightHue').oninput=function(){el('lightHueValue').textContent=this.value+'°';};
+el('lightApply').onclick=function(){
+ if(!lightEntity)return;
+ var brightness=Math.max(1,Math.min(255,Math.round(Number(el('lightBrightness').value)*255/100)));
+ var rgb=lightRGB(el('lightHue').value);
+ el('lightApply').disabled=true;
+ el('lightFeedback').textContent='Sender indstillinger …';
+ request('POST','services/light/turn_on',{entity_id:lightEntity,brightness:brightness,rgb_color:rgb},function(ok){
+   el('lightApply').disabled=false;
+   el('lightFeedback').textContent=ok?'✓ Lys opdateret':'Kunne ikke indstille lyset. Kontrollér HA forbindelse og om lyset understøtter farver.';
+ });
+};
+document.addEventListener('touchmove',function(ev){
+ if(ev.target&&ev.target.tagName==='INPUT'&&ev.target.type==='range')return;
+ if(ev.cancelable)ev.preventDefault();
+},{passive:false});
+document.addEventListener('wheel',function(ev){if(ev.cancelable)ev.preventDefault();},{passive:false});
+el('musicDismiss').onclick=closeMusic;
+el('musicOverlay').onclick=function(e){if(e.target===el('musicOverlay'))closeMusic();};
+el('musicPrev').onclick=function(){if(activeMusicWidget)musicAction(activeMusicWidget,'previous');};
+el('musicToggle').onclick=function(){if(activeMusicWidget)musicAction(activeMusicWidget,'toggle');};
+el('musicNext').onclick=function(){if(activeMusicWidget)musicAction(activeMusicWidget,'next');};
+el('musicPlayMedia').onclick=function(){if(activeMusicWidget)playConfiguredMedia(activeMusicWidget);};
+el('sleepBtn').onclick=function(){setScreen('saver');};
+el('editBtn').onclick=function(){startPair();};
+document.addEventListener('touchstart',function(){lastTouch=Date.now();},{passive:true});document.addEventListener('click',function(){lastTouch=Date.now();});
+setInterval(function(){clock();if(screen==='dashboard'&&el('curtainOverlay').style.display!=='flex'&&el('lightOverlay').style.display!=='flex'&&el('musicOverlay').style.display!=='flex'&&config.idle>0&&Date.now()-lastTouch>config.idle*60000)setScreen('saver');},1000);
+setInterval(readStates,5000);setInterval(pollPhoneChanges,1100);setInterval(function(){cycleNature(false);},60000);
+load();updateTapHint();applyBackground();clock();setScreen('saver');if(!config.setupComplete){setTimeout(startPair,400);}if(navigator.standalone===true)document.body.className='standalone';
+})();
+</script></body></html>

@@ -1,0 +1,19 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Liquid Home",
+        "description": "Opret en kode med mindst 12 tegn til at godkende din iPad fra telefonen. Du behøver ikke et Home Assistant adgangstoken.",
+        "data": {
+          "pairing_pin": "Parringskode (mindst 12 tegn)"
+        }
+      }
+    },
+    "error": {
+      "pin_too_short": "Koden skal være mindst 12 tegn"
+    },
+    "abort": {
+      "single_instance_allowed": "Liquid Home er allerede installeret"
+    }
+  }
+}
