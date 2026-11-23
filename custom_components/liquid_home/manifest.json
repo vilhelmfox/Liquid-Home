@@ -1,8 +1,8 @@
 {
   "domain": "liquid_home",
   "name": "Liquid Home",
-  "version": "1.5.0",
-  "documentation": "https://developers.home-assistant.io/docs/creating_integration_manifest/",
+  "version": "1.6.0",
+  "documentation": "https://github.com/vilhelmfox/Liquid-Home",
   "config_flow": true,
   "requirements": [
     "qrcode==8.2"
