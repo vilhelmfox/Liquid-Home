@@ -154,9 +154,10 @@ function cycleNature(force){
 }
 function applyBackground(){if(config.backgroundMode==='nature'){if(config.natureIndex>=0&&config.natureIndex<nature.length)setBackground(nature[config.natureIndex]);cycleNature(config.natureIndex<0);}else if(config.backgroundMode==='custom')setBackground(config.bg);else setBackground('');}
 
+function deviceError(result){return result&&result.error?result.error:'Tjek Home Assistant forbindelsen og vælg en styrbar enhed.';}
 function tileService(entity,svc){
  var parts=(svc||'').split('.');if(!entity||parts.length!==2||!/^[a-z0-9_]+$/.test(parts[0])||!/^[a-z0-9_]+$/.test(parts[1])){toast('Ugyldig handling','Angiv enhed og service, fx light.toggle.','⚠');return;}
- request('POST','services/'+parts[0]+'/'+parts[1],{entity_id:entity},function(ok){toast(ok?'Handling udført':'Kunne ikke styre enheden',entity,ok?'✓':'⚠');});
+ request('POST','services/'+parts[0]+'/'+parts[1],{entity_id:entity},function(ok,result){toast(ok?'Handling udført':'Kunne ikke styre enheden',ok?entity:deviceError(result),ok?'✓':'⚠');});
 }
 function performTileAction(w,i,ev){
  var a=w.actionType||'default',target=(w.actionTarget||w.entity||'').trim();
@@ -181,7 +182,7 @@ function curtainTarget(w){return (w.actionType==='toggle'?(w.actionTarget||w.ent
 function isCurtainTile(w){var e=curtainTarget(w);return /^cover\.[a-z0-9_]+$/.test(e)&&(w.actionType==='toggle'||(w.actionType||'default')==='default'&&w.type==='button');}
 function toggleCurtain(entity){
  var current=states[entity];var svc=(current==='open'||current==='opening')?'close_cover':'open_cover';
- request('POST','services/cover/'+svc,{entity_id:entity},function(ok){toast(ok?'Gardiner opdateret':'Gardiner kunne ikke styres',entity,ok?'✓':'⚠');});
+ request('POST','services/cover/'+svc,{entity_id:entity},function(ok,result){toast(ok?'Gardiner opdateret':'Gardiner kunne ikke styres',ok?entity:deviceError(result),ok?'✓':'⚠');});
 }
 function openCurtain(w){curtainEntity=curtainTarget(w);el('curtainTitle').textContent=w.label||'Gardiner';el('curtainFeedback').textContent='Vælg åbning fra 0 % (lukket) til 100 % (åbent).';el('curtainOverlay').style.display='flex';lastTouch=Date.now();}
 function closeCurtain(){el('curtainOverlay').style.display='none';curtainEntity='';lastTouch=Date.now();}
@@ -219,9 +220,9 @@ function bindHold(d,w){
  d.addEventListener('contextmenu',function(ev){ev.preventDefault();if(!pair.active){holdConsumed=true;if(isCurtainTile(w))openCurtain(w);else openLight(w);}},false);
 }
 function renderSlot(i){var w=config.slots[i]||{type:'empty'},e=w.entity||'',st=states[e],html='',n=w.label||'';switch(w.type){case 'clock':html='<span class="ico">◷</span><div><div class="tinyClock"></div><p>'+escape(n||'Ur')+'</p></div>';break;case 'text':html='<span class="ico">✦</span><div><b>'+escape(n||'Tekst')+'</b><p>'+escape(w.value||'')+'</p></div>';break;case 'sensor':html='<span class="ico">◉</span><div><b>'+escape(n||'Sensor')+'</b><div class="value">'+escape(st===undefined?'—':st)+'</div><p>'+escape(e)+'</p></div>';break;case 'button':html='<span class="ico">◉</span><div><b>'+escape(n||'Knap')+'</b><p>'+escape(st===undefined?'Tryk for handling':st)+'</p></div>';break;case 'music':var ms=musicStates[e]||{};html='<span class="ico">♫</span><div><b>'+escape(n||'Musik')+'</b><p>'+escape(ms.title||'Vælg en afspiller')+'</p><p>'+escape(ms.artist||'')+'</p><div class="musicbuttons"><button type="button" data-music="previous">⏮</button><button type="button" data-music="toggle">'+(st==='playing'?'⏸':'▶')+'</button><button type="button" data-music="next">⏭</button></div></div>';break;default:html='<span>＋</span>';}
-var d=document.createElement(w.type==='music'?'div':'button');if(w.type==='music'){d.setAttribute('role','button');d.tabIndex=0;}d.className='slot '+(w.type==='empty'?'empty ':'')+(w.type==='music'?'musicbox':'');d.type='button';d.innerHTML=html;d.onclick=function(ev){if(holdConsumed){holdConsumed=false;return;}if(pair.active){selectForPhone(i);return;}var action=ev.target.getAttribute('data-music');if(action){musicAction(w,action);return;}if(w.type==='music'){openMusic(w);return;}performTileAction(w,i,ev);};bindHold(d,w);return d;}
-function draw(){var g=el('grid');g.innerHTML='';for(var i=0;i<6;i++){var cell=renderSlot(i);if(pair.active&&pair.selected===i)cell.className+=' pair-selected';g.appendChild(cell);}clock();}
-function request(method,path,obj,cb){if(!deviceId||!deviceKey){cb(false,null);return;}
+var d=document.createElement(w.type==='music'?'div':'button');if(w.type==='music'){d.setAttribute('role','button');d.tabIndex=0;}d.className='slot '+(w.type==='empty'?'empty ':'')+(w.type==='music'?'musicbox':'');d.type='button';d.innerHTML=html;d.onclick=function(ev){if(holdConsumed){holdConsumed=false;return;}if(pair.active&&pair.editing){selectForPhone(i);return;}var action=ev.target.getAttribute('data-music');if(action){musicAction(w,action);return;}if(w.type==='music'){openMusic(w);return;}performTileAction(w,i,ev);};bindHold(d,w);return d;}
+function draw(){var g=el('grid');g.innerHTML='';for(var i=0;i<6;i++){var cell=renderSlot(i);if(pair.active&&pair.editing&&pair.selected===i)cell.className+=' pair-selected';g.appendChild(cell);}clock();}
+function request(method,path,obj,cb){if(!deviceId||!deviceKey){cb(false,{error:'iPad er ikke godkendt endnu. Forbind den fra telefonen.'});return;}
 var x=new XMLHttpRequest(),p=path,body=obj;
 if(path==='')p='check';else if(path==='states')p='states';else if(path.indexOf('services/')===0){var parts=path.split('/');p='service';body={domain:parts[1],service:parts[2],data:obj};}
 else {cb(false,null);return;}
@@ -229,12 +230,12 @@ x.open(method,'/api/liquid_home/device/'+encodeURIComponent(deviceId)+'/'+p,true
 if(body!==null)x.setRequestHeader('Content-Type','application/json');
 x.onreadystatechange=function(){if(x.readyState===4){var parsed=null;try{parsed=JSON.parse(x.responseText);}catch(e){}cb(x.status>=200&&x.status<300,parsed);}};
 x.onerror=function(){cb(false,null)};x.send(body===null?null:JSON.stringify(body));}
-function runAction(w){if(!w.entity||!w.service){toast('Konfiguration mangler','Udfyld entity ID og service under Rediger.','⚙');return;}var a=w.service.split('.');if(a.length!==2||!(/^[a-z0-9_]+$/.test(a[0])&&/^[a-z0-9_]+$/.test(a[1]))){toast('Ugyldig service','Skriv fx light.toggle.','⚠');return;}request('POST','services/'+a[0]+'/'+a[1],{entity_id:w.entity},function(ok){toast(ok?'Handling sendt':'Kunne ikke udføre handling',w.label||w.entity,ok?'✓':'⚠');});}
+function runAction(w){if(!w.entity||!w.service){toast('Konfiguration mangler','Udfyld entity ID og service under Rediger.','⚙');return;}var a=w.service.split('.');if(a.length!==2||!(/^[a-z0-9_]+$/.test(a[0])&&/^[a-z0-9_]+$/.test(a[1]))){toast('Ugyldig service','Skriv fx light.toggle.','⚠');return;}request('POST','services/'+a[0]+'/'+a[1],{entity_id:w.entity},function(ok,result){toast(ok?'Handling sendt':'Kunne ikke udføre handling',ok?(w.label||w.entity):deviceError(result),ok?'✓':'⚠');});}
 function openMusic(w){activeMusicWidget=w;el('musicPlayerTitle').textContent=w.label||'Musik';var info=musicStates[w.entity]||{};el('musicNowPlaying').textContent=(info.title||'Ingen sanginfo')+(info.artist?' · '+info.artist:'');el('musicPlayMedia').style.display=w.mediaSource?'block':'none';el('musicFeedback').textContent='Afspiller og sang vælges i telefoneditoren.';el('musicOverlay').style.display='flex';lastTouch=Date.now();}
 function closeMusic(){el('musicOverlay').style.display='none';activeMusicWidget=null;lastTouch=Date.now();}
 function playConfiguredMedia(w){if(!w||!w.entity||!w.mediaSource)return;request('POST','services/media_player/play_media',{entity_id:w.entity,media_content_id:w.mediaSource,media_content_type:w.mediaType||'music'},function(ok){el('musicFeedback').textContent=ok?'✓ Afspilning sendt':'Kunne ikke afspille. Tjek at medieafspilleren understøtter dette medielink.';});}
-function musicAction(w,a){if(!w.entity){toast('Vælg en afspiller','Vælg en afspiller via telefonen.','♫');return;}var service=a==='previous'?'media_previous_track':a==='next'?'media_next_track':'media_play_pause';request('POST','services/media_player/'+service,{entity_id:w.entity},function(ok){toast(ok?'Musik opdateret':'Musik kunne ikke styres',w.label||'Afspiller','♫');});}
-function readStates(){if(!deviceKey||polling||document.hidden)return;polling=true;request('GET','states',null,function(ok,result){polling=false;if(!ok||!result||!result.length){toast('Home Assistant','Forbindelsen er afbrudt.','⚠');return;}var next={};for(var i=0;i<result.length;i++){next[result[i].entity_id]=result[i].state;if(result[i].entity_id.indexOf('media_player.')===0){var a=result[i].attributes||{};musicStates[result[i].entity_id]={title:a.media_title||'',artist:a.media_artist||'',source:a.source||''};}}if(baseline){for(var j=0;j<config.rules.length;j++){var r=config.rules[j];if(Object.prototype.hasOwnProperty.call(states,r.entity)&&states[r.entity]!==next[r.entity]&&next[r.entity]===r.state)toast(r.title,r.body||'', '🔔');}}states=next;baseline=true;if(screen==='dashboard')draw();});}
+function musicAction(w,a){if(!w.entity){toast('Vælg en afspiller','Vælg en afspiller via telefonen.','♫');return;}var service=a==='previous'?'media_previous_track':a==='next'?'media_next_track':'media_play_pause';request('POST','services/media_player/'+service,{entity_id:w.entity},function(ok,result){toast(ok?'Musik opdateret':'Musik kunne ikke styres',ok?(w.label||'Afspiller'):deviceError(result),'♫');});}
+function readStates(){if(!deviceKey||polling||document.hidden)return;polling=true;request('GET','states',null,function(ok,result){polling=false;if(!ok||!result){toast('Home Assistant',deviceError(result),'⚠');return;}var next={};for(var i=0;i<result.length;i++){next[result[i].entity_id]=result[i].state;if(result[i].entity_id.indexOf('media_player.')===0){var a=result[i].attributes||{};musicStates[result[i].entity_id]={title:a.media_title||'',artist:a.media_artist||'',source:a.source||''};}}if(baseline){for(var j=0;j<config.rules.length;j++){var r=config.rules[j];if(Object.prototype.hasOwnProperty.call(states,r.entity)&&states[r.entity]!==next[r.entity]&&next[r.entity]===r.state)toast(r.title,r.body||'', '🔔');}}states=next;baseline=true;if(screen==='dashboard')draw();});}
 var nature=[
 'https://images.unsplash.com/photo-1470770841072-f978cf4d019e?w=1300&q=75',
 'https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=1300&q=75',
@@ -244,11 +245,11 @@ var nature=[
 
 function pairRequest(method,path,obj,cb){var x=new XMLHttpRequest();x.open(method,'/api/liquid_home/'+path,true);if(obj!==null)x.setRequestHeader('Content-Type','application/json');x.onreadystatechange=function(){if(x.readyState===4){var data={};try{data=JSON.parse(x.responseText)}catch(e){}cb(x.status>=200&&x.status<300,data)}};x.onerror=function(){cb(false,{error:'Netværksfejl'})};x.send(obj===null?null:JSON.stringify(obj))}
 function startPair(){
- if(pair.active){el('pairPanel').style.display='block';return;}
+ if(pair.active){pair.editing=true;el('pairPanel').style.display='block';document.body.className+=' pair-mode';draw();return;}
  el('pairPanel').style.display='block';el('pairStatus').textContent='Opretter forbindelse …';if(!config.setupComplete){document.body.className+=' first-run';el('pairTitle').textContent='Scan QR koden for at komme i gang';}
  pairRequest('POST','new',{settings:{tapAction:config.tapAction,idle:config.idle,rules:config.rules,backgroundMode:config.backgroundMode,setupComplete:config.setupComplete},widgets:config.slots},function(ok,r){
   if(!ok){el('pairStatus').textContent='Forbindelsen kræver Liquid Home integrationen på Home Assistant. Kontrollér, at den er installeret, og at Home Assistant er genstartet.';el('pairQR').style.display='none';return;}
-  pair.active=true;pair.id=r.id;pair.key=r.ipad_key;pair.rev=0;pair.selected=-1;
+  pair.active=true;pair.editing=true;pair.id=r.id;pair.key=r.ipad_key;pair.rev=0;pair.selected=-1;
   el('pairQR').style.display='block';el('pairQR').src=r.qr;
   el('pairStatus').textContent='QR koden virker i 15 minutter. Telefonen skal være på samme Home Assistant adresse.';
   document.body.className+=' pair-mode';draw();
@@ -293,8 +294,8 @@ function pollPhoneChanges(){
   if(updates.length)draw();
  });
 }
-function endPair(){pair.active=false;pair.id='';pair.key='';pair.selected=-1;el('pairPanel').style.display='none';document.body.className=document.body.className.replace(' pair-mode','');draw();}
-el('pairContinue').onclick=function(){el('pairPanel').style.display='none';setScreen('dashboard');};
+function endPair(){pair.editing=false;pair.active=false;pair.id='';pair.key='';pair.selected=-1;el('pairPanel').style.display='none';document.body.className=document.body.className.replace(' pair-mode','');draw();}
+el('pairContinue').onclick=function(){pair.editing=false;el('pairPanel').style.display='none';document.body.className=document.body.className.replace(' pair-mode','');setScreen('dashboard');toast('Dashboard klar','Tryk på felter for at styre enheder. Tryk Rediger for at vælge felter til telefonen.','✓');};
 el('pairEnd').onclick=endPair;
 
 var saverHold=null,saverHeld=false;
