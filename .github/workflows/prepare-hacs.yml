@@ -1,0 +1,48 @@
+name: Prepare HACS repository
+on:
+  push:
+    paths:
+      - ".github/workflows/prepare-hacs.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  unpack:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Extract integration files
+        run: |
+          python3 - <<'PY'
+          import zipfile
+          from pathlib import Path
+          archive=Path("liquid-home-v15.zip")
+          if not archive.is_file():
+              raise SystemExit("Missing liquid-home-v15.zip")
+          allowed={"hacs.json","README.md"}
+          with zipfile.ZipFile(archive) as z:
+              names=[i.filename for i in z.infolist() if not i.is_dir()]
+              if not any(x == "custom_components/liquid_home/manifest.json" for x in names):
+                  raise SystemExit("Not a Liquid Home HACS archive")
+              for member in z.infolist():
+                  name=member.filename
+                  path=Path(name)
+                  if member.is_dir(): continue
+                  if path.is_absolute() or ".." in path.parts or not (
+                    name in allowed or name.startswith("custom_components/liquid_home/")
+                  ):
+                    raise SystemExit("Unexpected archive path: "+name)
+                  path.parent.mkdir(parents=True,exist_ok=True)
+                  path.write_bytes(z.read(member))
+          PY
+      - name: Commit extracted sources
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add hacs.json README.md custom_components/liquid_home
+          if ! git diff --cached --quiet; then
+            git commit -m "Unpack Liquid Home v1.5 HACS integration"
+            git push
+          fi
