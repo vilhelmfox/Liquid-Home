@@ -132,7 +132,7 @@ button:active{-webkit-transform:scale(.97);transform:scale(.97)}
 var KEY='liquid_home_v05',defaults={slots:[{type:'empty'},{type:'empty'},{type:'empty'},{type:'empty'},{type:'empty'},{type:'empty'}],rules:[],bg:'',idle:2,tapAction:'dashboard',backgroundMode:'default',setupComplete:false,natureIndex:-1,natureChangedAt:0};
 var musicStates={},config=defaults,token='',deviceId='',deviceKey='',states={},baseline=false,lastTouch=Date.now(),screen='saver',polling=false;
 try{var savedAuth=JSON.parse(localStorage.getItem('liquid_home_access')||'null');if(savedAuth&&savedAuth.id&&savedAuth.key){deviceId=savedAuth.id;deviceKey=savedAuth.key;token='local';}}catch(e){}
-var virginInstall=true;var pair={active:false,id:'',key:'',selected:-1,rev:0,busy:false};
+var virginInstall=true;var pair={active:false,editing:false,id:'',key:'',selected:-1,rev:0,busy:false};
 function el(id){return document.getElementById(id)}
 function escape(s){return String(s===undefined?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});}
 function save(){try{localStorage.setItem(KEY,JSON.stringify(config));return true;}catch(e){toast('Kunne ikke gemme','Billedet kan være for stort. Prøv et mindre foto.','⚠');return false;}}
@@ -204,7 +204,7 @@ function closeLight(){el('lightOverlay').style.display='none';lightEntity='';las
 function bindHold(d,w){
  if(!isLightTile(w)&&!isCurtainTile(w))return;
  d.addEventListener('touchstart',function(ev){
-   if(pair.active||el('lightOverlay').style.display==='flex'||el('curtainOverlay').style.display==='flex')return;
+   if((pair.active&&pair.editing)||el('lightOverlay').style.display==='flex'||el('curtainOverlay').style.display==='flex')return;
    var t=ev.touches&&ev.touches[0];if(!t)return;
    lightStartX=t.clientX;lightStartY=t.clientY;holdConsumed=false;
    if(holdTimer)clearTimeout(holdTimer);
@@ -217,7 +217,7 @@ function bindHold(d,w){
  function endHold(){if(holdTimer)clearTimeout(holdTimer);holdTimer=null;}
  d.addEventListener('touchend',endHold,false);
  d.addEventListener('touchcancel',endHold,false);
- d.addEventListener('contextmenu',function(ev){ev.preventDefault();if(!pair.active){holdConsumed=true;if(isCurtainTile(w))openCurtain(w);else openLight(w);}},false);
+ d.addEventListener('contextmenu',function(ev){ev.preventDefault();if(!(pair.active&&pair.editing)){holdConsumed=true;if(isCurtainTile(w))openCurtain(w);else openLight(w);}},false);
 }
 function renderSlot(i){var w=config.slots[i]||{type:'empty'},e=w.entity||'',st=states[e],html='',n=w.label||'';switch(w.type){case 'clock':html='<span class="ico">◷</span><div><div class="tinyClock"></div><p>'+escape(n||'Ur')+'</p></div>';break;case 'text':html='<span class="ico">✦</span><div><b>'+escape(n||'Tekst')+'</b><p>'+escape(w.value||'')+'</p></div>';break;case 'sensor':html='<span class="ico">◉</span><div><b>'+escape(n||'Sensor')+'</b><div class="value">'+escape(st===undefined?'—':st)+'</div><p>'+escape(e)+'</p></div>';break;case 'button':html='<span class="ico">◉</span><div><b>'+escape(n||'Knap')+'</b><p>'+escape(st===undefined?'Tryk for handling':st)+'</p></div>';break;case 'music':var ms=musicStates[e]||{};html='<span class="ico">♫</span><div><b>'+escape(n||'Musik')+'</b><p>'+escape(ms.title||'Vælg en afspiller')+'</p><p>'+escape(ms.artist||'')+'</p><div class="musicbuttons"><button type="button" data-music="previous">⏮</button><button type="button" data-music="toggle">'+(st==='playing'?'⏸':'▶')+'</button><button type="button" data-music="next">⏭</button></div></div>';break;default:html='<span>＋</span>';}
 var d=document.createElement(w.type==='music'?'div':'button');if(w.type==='music'){d.setAttribute('role','button');d.tabIndex=0;}d.className='slot '+(w.type==='empty'?'empty ':'')+(w.type==='music'?'musicbox':'');d.type='button';d.innerHTML=html;d.onclick=function(ev){if(holdConsumed){holdConsumed=false;return;}if(pair.active&&pair.editing){selectForPhone(i);return;}var action=ev.target.getAttribute('data-music');if(action){musicAction(w,action);return;}if(w.type==='music'){openMusic(w);return;}performTileAction(w,i,ev);};bindHold(d,w);return d;}
@@ -266,7 +266,7 @@ function pollPhoneChanges(){
  if(!pair.active||pair.busy)return;
  pair.busy=true;
  pairRequest('GET','state/'+encodeURIComponent(pair.id)+'?key='+encodeURIComponent(pair.key)+'&since='+pair.rev,null,function(ok,r){
-  pair.busy=false;if(!ok){pair.active=false;document.body.className=document.body.className.replace(' pair-mode','');toast('Redigering udløbet','Scan en ny QR kode for at fortsætte','⚠');return;}
+  pair.busy=false;if(!ok){pair.editing=false;pair.active=false;document.body.className=document.body.className.replace(' pair-mode','');toast('Redigering udløbet','Scan en ny QR kode for at fortsætte','⚠');return;}
   pair.rev=r.revision||0;
   var updates=r.updates||[];
   for(var j=0;j<updates.length;j++){
