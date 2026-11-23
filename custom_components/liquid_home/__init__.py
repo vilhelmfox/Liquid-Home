@@ -460,7 +460,7 @@ async def async_setup_entry(hass, entry) -> bool:
     """Start one local Liquid Home instance and serve its bundled frontend."""
     if hass.data.get(DOMAIN, {}).get("registered"):
         return True
-    pin = entry.data.get("pairing_pin", "")
+    pin = entry.options.get("pairing_pin", entry.data.get("pairing_pin", ""))
     if not isinstance(pin, str) or len(pin) < 12:
         return False
     storage = Store(hass, 1, "liquid_home_devices")
