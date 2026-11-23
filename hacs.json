@@ -1,5 +1,5 @@
 {
   "name": "Liquid Home",
-  "render_readme": true,
+  "render_readme": false,
   "homeassistant": "2024.8.0"
 }
