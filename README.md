@@ -1,6 +1,6 @@
-# Liquid Home v1.8 – stabil betjening og opsætning
+# Liquid Home v1.9 – notifikationer med lyd og emoji
 
-**Nyt i v1.8:** QR redigering: Scan koden, tryk *Vælg et felt på iPad*, og tryk på et af de seks felter. Afslut med ✓ øverst på iPad'en. Status fra Home Assistant opdateres uden at genstarte animationer hvert femte sekund. Telefoneditoren har søgbar dropdown til både dashboardfelter og notifikationsregler.
+**Nyt i v1.9:** Notifikationer kan få deres egen emoji (f.eks. 🚪, 🔔, 💡 og 🐕), som vælges på telefonen. Den vedhæftede ding lyd afspilles ved notifikationer og ved testknappen. Tryk én gang på 🔊 øverst på iPad'en for at afprøve og aktivere lyd i Safari. iPad Air 1 kan blokere automatisk lyd, indtil der har været en brugerhandling. Tidligere forbedringer til redigering, enhedssøgning og stabile sensoropdateringer er bevaret.
 
 Liquid Home giver din iPad et glasagtigt ur og et dashboard med seks felter. Hele tilpasningen foregår fra telefonen via en QR kode.
 
