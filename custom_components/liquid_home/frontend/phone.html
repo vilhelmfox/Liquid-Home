@@ -87,8 +87,8 @@ button{-webkit-transition:opacity .18s ease,-webkit-transform .18s ease;transiti
 (function(){'use strict';
 function el(x){return document.getElementById(x)}
 function qp(name){var m=new RegExp('[?&]'+name+'=([^&]+)').exec(location.search);return m?decodeURIComponent(m[1]):''}
-var sid=qp('sid'),key=qp('key'),selected=-1,busy=false,closed=false,wizardStep=0,wizardStarted=false,wizardBg='nature';
-function req(method,url,data,cb){var x=new XMLHttpRequest();x.open(method,url,true);if(data!==null)x.setRequestHeader('Content-Type','application/json');x.onreadystatechange=function(){if(x.readyState===4){var r={};try{r=JSON.parse(x.responseText)}catch(e){}cb(x.status>=200&&x.status<300,r)}};x.onerror=function(){cb(false,{error:'Netværksfejl'})};x.send(data===null?null:JSON.stringify(data))}
+var sid=qp('sid'),key=qp('key'),selected=-1,busy=false,closed=false,wizardStep=0,wizardStarted=false,wizardBg='nature',entitiesLoaded=false,entitiesLoading=false,sessionAuthorized=false;
+function req(method,url,data,cb){var x=new XMLHttpRequest();x.open(method,url,true);if(data!==null)x.setRequestHeader('Content-Type','application/json');x.onreadystatechange=function(){if(x.readyState===4){var r={};try{r=JSON.parse(x.responseText)}catch(e){}cb(x.status>=200&&x.status<300,r,x.status)}};x.onerror=function(){cb(false,{error:'Netværksfejl'},0)};x.send(data===null?null:JSON.stringify(data))}
 function showWizardStep(n){wizardStep=n;var arr=el('wizard').querySelectorAll('.step');for(var i=0;i<arr.length;i++)arr[i].className='step'+(i===n?' active':'');el('wizardProgress').textContent='TRIN '+(n+1)+' AF 4';el('wizardBack').style.visibility=n===0?'hidden':'visible';el('wizardNext').textContent=n===3?'Færdig':'Fortsæt';}
 function startWizard(){if(wizardStarted)return;wizardStarted=true;el('wizard').style.display='block';showWizardStep(0);}
 function setWizardBgChoice(mode){wizardBg=mode;var items=el('wizard').querySelectorAll('[data-bg]');for(var i=0;i<items.length;i++)items[i].className='choice'+(items[i].getAttribute('data-bg')===mode?' chosen':'');el('wizardUpload').style.display=mode==='custom'?'block':'none';}
@@ -100,16 +100,40 @@ function wizardAdvance(){if(wizardStep===3){finishWizard();return;}
 }
 var wizardUploaded=false;
 function uploadFile(input,message,done){var f=input.files&&input.files[0];if(!f){el(message).textContent='Vælg et billede først';return;}var reader=new FileReader();reader.onload=function(){var im=new Image();im.onload=function(){compressImage(im,function(data){saveChange({background:data},message,function(ok){if(ok){wizardUploaded=true;if(done)done();}});});};im.onerror=function(){el(message).textContent='Billedet kunne ikke læses';};im.src=reader.result;};reader.readAsDataURL(f);}
-function poll(){if(busy||closed)return;busy=true;req('GET','/api/liquid_home/state/'+encodeURIComponent(sid)+'?key='+encodeURIComponent(key),null,function(ok,r){busy=false;if(!ok){el('status').textContent='Forbindelsen er afbrudt';el('message').textContent=r.error||'Prøv at scanne en ny QR kode';el('form').style.display='none';closed=true;return;}el('status').textContent='Forbundet til iPad';if(r.settings && !window.initialSettings){refreshEntityList();if(r.settings.setupComplete===false)startWizard();window.initialSettings=true;localRules=r.settings.rules||[];el('idlePhone').value=r.settings.idle===undefined?2:r.settings.idle;el('tapActionPhone').value=r.settings.tapAction||'dashboard';renderRulesPhone();}if(selected!==r.selected){selected=r.selected;if(selected>=0){if(r.widget){['kind','label','value','entity','service','tileAction','actionTarget','actionService'].forEach(function(id){var property=id==='kind'?'type':id;el(id).value=r.widget[property]||((id==='kind')?'empty':(id==='tileAction'?'default':''));});}el('mediaSource').value=(r.widget&&r.widget.mediaSource)||'';el('mediaType').value=(r.widget&&r.widget.mediaType)||'music';var oldKind=r.widget&&r.widget.type;
+function poll(){if(busy||closed)return;busy=true;req('GET','/api/liquid_home/state/'+encodeURIComponent(sid)+'?key='+encodeURIComponent(key),null,function(ok,r){busy=false;if(!ok){el('status').textContent='Forbindelsen er afbrudt';el('message').textContent=r.error||'Prøv at scanne en ny QR kode';el('form').style.display='none';closed=true;return;}el('status').textContent='Forbundet til iPad';
+sessionAuthorized=r.authorized===true;
+if(sessionAuthorized&&!entitiesLoaded&&!entitiesLoading)refreshEntityList();
+if(!sessionAuthorized&&!entitiesLoading){
+ el('entityStatus').textContent='Forbind først Home Assistant: indtast den automatisk genererede Liquid Home parringskode under “Forbind til Home Assistant” ovenfor. Derefter hentes enhederne automatisk.';
+}
+if(r.settings && !window.initialSettings){if(r.settings.setupComplete===false)startWizard();window.initialSettings=true;localRules=r.settings.rules||[];el('idlePhone').value=r.settings.idle===undefined?2:r.settings.idle;el('tapActionPhone').value=r.settings.tapAction||'dashboard';renderRulesPhone();}if(selected!==r.selected){selected=r.selected;if(selected>=0){if(r.widget){['kind','label','value','entity','service','tileAction','actionTarget','actionService'].forEach(function(id){var property=id==='kind'?'type':id;el(id).value=r.widget[property]||((id==='kind')?'empty':(id==='tileAction'?'default':''));});}el('mediaSource').value=(r.widget&&r.widget.mediaSource)||'';el('mediaType').value=(r.widget&&r.widget.mediaType)||'music';var oldKind=r.widget&&r.widget.type;
 if(oldKind==='button'){var oldEntity=(r.widget.entity||r.widget.actionTarget||'');oldKind=oldEntity.split('.')[0];if(['light','switch','cover'].indexOf(oldKind)<0)oldKind='switch';}
 if(oldKind&&el('kind').querySelector('option[value="'+oldKind+'"]'))el('kind').value=oldKind;
 updateKindUI();el('slotHint').textContent='Redigerer felt '+(selected+1)+' af 6';el('form').style.display='block';el('message').textContent='Vælg indhold, og tryk Gem på iPad.';}else{el('slotHint').textContent='Tryk på et felt på iPad';el('form').style.display='none';}}});}
 var availableEntities=[];
 function refreshEntityList(){
- if(!sid||!key)return;
- req('GET','/api/liquid_home/entities/'+encodeURIComponent(sid)+'?key='+encodeURIComponent(key),null,function(ok,r){
-   if(!ok){el('entityStatus').textContent='Kunne ikke hente enheder. Tjek integrationen og genstart Home Assistant.';return;}
-   availableEntities=r.entities||[];el('entityStatus').textContent=availableEntities.length+' enheder fundet. Vælg et felt på iPad, og find derefter enheden her.';
+ if(!sid||!key||closed||entitiesLoading)return;
+ if(!sessionAuthorized){
+  el('entityStatus').textContent='Godkend først forbindelsen med din Liquid Home parringskode i afsnittet “Forbind til Home Assistant”.';
+  return;
+ }
+ entitiesLoading=true;
+ el('entityStatus').textContent='Henter enheder fra Home Assistant …';
+ req('GET','/api/liquid_home/entities/'+encodeURIComponent(sid)+'?key='+encodeURIComponent(key),null,function(ok,r,httpStatus){
+   entitiesLoading=false;
+   if(!ok){
+    entitiesLoaded=false;
+    if(httpStatus===403){
+      sessionAuthorized=false;
+      el('entityStatus').textContent='Adgangen til enhedslisten er afvist: '+(r.error||'Godkend igen med parringskoden.')+' Brug den aktuelle QR kode og godkend på telefonen.';
+    }else if(httpStatus===404){
+      el('entityStatus').textContent='QR forbindelsen er udløbet eller integrationens adresse mangler. Vis en ny QR kode på iPad og scan igen.';
+    }else{
+      el('entityStatus').textContent='Home Assistant kunne ikke levere enhedslisten (HTTP '+(httpStatus||'netværksfejl')+'): '+(r.error||'Tjek Home Assistant logfiler under Indstillinger → System → Logfiler.');
+    }
+    return;
+   }
+   entitiesLoaded=true;availableEntities=r.entities||[];
    populateEntitySelect(el('entity').value);
    populateRuleSelect();
  });
@@ -166,7 +190,7 @@ function updateKindUI(){
 }
 el('kind').onchange=function(){el('entitySearch').value='';el('entity').value='';el('entitySelect').value='';el('label').value='';updateKindUI();};
 function inferQuick(w){if(!w)return 'toggle';if(w.type==='music')return 'music';if(w.type==='sensor')return 'sensor';if(w.actionType==='none'||w.type==='text'||w.type==='clock'||w.type==='empty')return 'none';if(w.actionType==='service'||w.actionType==='url'||w.actionType==='qr'||w.actionType==='saver')return 'advanced';return 'toggle';}
-el('loadEntities').onclick=refreshEntityList;
+el('loadEntities').onclick=function(){entitiesLoaded=false;refreshEntityList();};
 el('deviceFilter').onchange=function(){el('entitySearch').value='';populateEntitySelect(el('entity').value);};
 el('entitySearch').oninput=function(){populateEntitySelect(el('entity').value);};
 el('entitySelect').onchange=function(){el('entity').value=this.value;var o=this.options[this.selectedIndex];if(o&&o.value&&!el('label').value.trim())el('label').value=o.textContent.replace(/ \([^)]*\)$/,'');};
@@ -201,11 +225,11 @@ function authorizePhone(pin,target){
  if(pin.length<12){el(target).textContent='Adgangskoden skal være mindst 12 tegn.';return;}
  req('POST','/api/liquid_home/authorize/'+encodeURIComponent(sid),{key:key,pin:pin},function(ok,r){
  el(target).textContent=ok?'✓ Home Assistant er forbundet!':'Kunne ikke forbinde: '+(r.error||'Fejl');
- if(ok){el('haTokenPhone').value='';el('wizardToken').value='';refreshEntityList();}
+ if(ok){sessionAuthorized=true;entitiesLoaded=false;el('haTokenPhone').value='';el('wizardToken').value='';refreshEntityList();}
  });
 }
 el('connectPhone').onclick=function(){authorizePhone(el('haTokenPhone').value.trim(),'connectionMessage');};
-el('disconnectPhone').onclick=function(){saveChange({ha_disconnect:true},'connectionMessage');};
+el('disconnectPhone').onclick=function(){saveChange({ha_disconnect:true},'connectionMessage',function(ok){if(ok){sessionAuthorized=false;entitiesLoaded=false;availableEntities=[];populateEntitySelect('');populateRuleSelect();el('entityStatus').textContent='Forbindelsen er afbrudt. Godkend med parringskoden for at hente enheder igen.';}});};
 el('saveTapPhone').onclick=function(){if(closed)return;el('saveTapPhone').disabled=true;
 req('POST','/api/liquid_home/update/'+encodeURIComponent(sid),{key:key,tap_action:el('tapActionPhone').value},function(ok,r){
 el('saveTapPhone').disabled=false;el('tapMessage').textContent=ok?'✓ Gemt! Tryk på iPad ændret.':(r.error||'Kunne ikke gemme');
