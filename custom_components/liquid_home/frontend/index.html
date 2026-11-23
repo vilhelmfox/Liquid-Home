@@ -234,8 +234,10 @@ function openLight(w){
  el('lightTitle').textContent=lightTitle;
  var attrs=entityAttributes[lightEntity]||{},modes=attrs.supported_color_modes||[],hasColor=false,hasDim=false;
  for(var j=0;j<modes.length;j++){if(['hs','rgb','rgbw','rgbww','xy'].indexOf(modes[j])>=0)hasColor=true;if(modes[j]!=='onoff')hasDim=true;}
- el('lightHue').parentNode.style.display=hasColor?'':'none';
- el('lightBrightness').parentNode.style.display=hasDim?'':'none';
+ el('lightHue').style.display=hasColor?'block':'none';
+ var hueLabel=el('lightHue').previousElementSibling;if(hueLabel)hueLabel.style.display=hasColor?'flex':'none';
+ el('lightBrightness').style.display=hasDim?'block':'none';
+ var brightnessLabel=el('lightBrightness').previousElementSibling;if(brightnessLabel)brightnessLabel.style.display=hasDim?'flex':'none';
  if(typeof attrs.brightness==='number'){var level=Math.max(1,Math.round(attrs.brightness*100/255));el('lightBrightness').value=level;el('lightBrightnessValue').textContent=level+' %';}
  el('lightFeedback').textContent='Indstillingerne styres her. Opsætning af feltet sker på telefonen.';
  el('lightOverlay').style.display='flex';
@@ -370,7 +372,7 @@ el('lightApply').onclick=function(){
  var brightness=Math.max(1,Math.min(255,Math.round(Number(el('lightBrightness').value)*255/100)));
  var rgb=lightRGB(el('lightHue').value),attrs=entityAttributes[lightEntity]||{},modes=attrs.supported_color_modes||[];
  var params={entity_id:lightEntity};
- if(modes.indexOf('onoff')<0)params.brightness=brightness;
+ if(modes.length&&modes.indexOf('onoff')<0)params.brightness=brightness;
  if(modes.indexOf('hs')>=0||modes.indexOf('rgb')>=0||modes.indexOf('rgbw')>=0||modes.indexOf('rgbww')>=0||modes.indexOf('xy')>=0)params.rgb_color=rgb;
  el('lightApply').disabled=true;
  el('lightFeedback').textContent='Sender indstillinger …';
