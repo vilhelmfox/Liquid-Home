@@ -2,7 +2,7 @@
 <html lang="da"><head>
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
-<meta http-equiv="Expires" content="0"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="Liquid Home"><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"><meta name="theme-color" content="#172b36"><title>Liquid Home v1.9</title>
+<meta http-equiv="Expires" content="0"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="Liquid Home"><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"><meta name="theme-color" content="#172b36"><title>Liquid Home v2.0</title>
 <style>
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}html,body{width:100%;height:100%;margin:0;overflow:hidden;position:relative;overscroll-behavior:none;-webkit-overflow-scrolling:auto;font-family:-apple-system,BlinkMacSystemFont,"Helvetica Neue",Arial,sans-serif;color:white;background:#18384a}button,input,select{font:inherit}button{cursor:pointer}button:focus{outline-color:#cef4ff}
 #backdrop{position:fixed;top:0;right:0;bottom:0;left:0;background:linear-gradient(160deg,#7dbac0 0%,#668f9e 31%,#2d6c6c 60%,#102c37 100%);z-index:0;overflow:hidden}
@@ -121,7 +121,10 @@ button:active{-webkit-transform:scale(.97);transform:scale(.97)}
 <div id="curtainFeedback" class="muted" style="margin-top:9px;font-size:12px"></div>
 </div></div><div id="musicOverlay" role="dialog" aria-label="Musikstyring"><div id="musicCard">
 <div style="color:#bde4ff;font-size:12px;letter-spacing:2px">MUSIK</div><h2 id="musicPlayerTitle">Musik</h2>
+<div id="musicAlbumArt" style="width:110px;height:110px;margin:8px auto;background:rgba(255,255,255,.12);border-radius:20px;background-size:cover;background-position:center"></div>
 <p id="musicNowPlaying">Vælg en medieafspiller på telefonen.</p>
+<label class="lightLabel" for="musicVolume"><span>Lydstyrke</span><b id="musicVolumeValue">50 %</b></label><input id="musicVolume" type="range" min="0" max="100" value="50" style="width:100%">
+<button type="button" id="musicVolumeApply">Indstil lydstyrke</button>
 <div class="musicRow"><button type="button" id="musicPrev">⏮</button><button type="button" id="musicToggle">⏯</button><button type="button" id="musicNext">⏭</button></div>
 <button id="musicPlayMedia" type="button">▶ Afspil valgt sang eller playliste</button>
 <div id="musicFeedback" style="font-size:12px;min-height:21px;margin:10px 0"></div>
@@ -180,6 +183,16 @@ function tileService(entity,svc){
  request('POST','services/'+parts[0]+'/'+parts[1],{entity_id:entity},function(ok,result){toast(ok?'Handling udført':'Kunne ikke styre enheden',ok?entity:deviceError(result),ok?'✓':'⚠');});
 }
 function performTileAction(w,i,ev){
+ if(w.type==='clock'||w.type==='sensor'||w.type==='text'||w.type==='empty')return;
+ if(w.type==='music'){musicAction(w,'toggle');return;}
+ if(w.type==='cover'){toggleCurtain(w.entity);return;}
+ if(w.type==='light'){tileService(w.entity,'light.toggle');return;}
+ if(w.type==='switch'){
+   var domain=(w.entity||'').split('.')[0];
+   if(['switch','fan','input_boolean'].indexOf(domain)<0){toast('Vælg en kontakt','Vælg en gyldig Home Assistant kontakt.','⚠');return;}
+   tileService(w.entity,domain+'.toggle');return;
+ }
+
  var a=w.actionType||'default',target=(w.actionTarget||w.entity||'').trim();
  if(a==='none')return;
  if(a==='toggle'){var domain=target.split('.')[0];if(!/^(light|switch|fan|input_boolean|cover)$/.test(domain)){toast('Vælg en kontakt eller et lys','Indsæt fx light.stue som enhed.','⚠');return;}if(domain==='cover'){toggleCurtain(target);return;}tileService(target,domain+'.toggle');return;}
@@ -196,10 +209,11 @@ var activeMusicWidget=null;var holdTimer=null,holdConsumed=false,lightEntity='',
 function isLightTile(w){
  var entity=(w.actionType==='toggle'?(w.actionTarget||w.entity):w.entity)||'';
  return /^light\.[a-z0-9_]+$/.test(entity)&&
-   (w.actionType==='toggle'||(w.actionType||'default')==='default'&&w.type==='button');
+   (w.type==='light'||
+   (w.actionType==='toggle'||(w.actionType||'default')==='default'&&w.type==='button'));
 }
 function curtainTarget(w){return (w.actionType==='toggle'?(w.actionTarget||w.entity):w.entity)||'';}
-function isCurtainTile(w){var e=curtainTarget(w);return /^cover\.[a-z0-9_]+$/.test(e)&&(w.actionType==='toggle'||(w.actionType||'default')==='default'&&w.type==='button');}
+function isCurtainTile(w){var e=curtainTarget(w);return /^cover\.[a-z0-9_]+$/.test(e)&&(w.type==='cover'||w.actionType==='toggle'||(w.actionType||'default')==='default'&&w.type==='button');}
 function toggleCurtain(entity){
  var current=states[entity];var svc=(current==='open'||current==='opening')?'close_cover':'open_cover';
  request('POST','services/cover/'+svc,{entity_id:entity},function(ok,result){toast(ok?'Gardiner opdateret':'Gardiner kunne ikke styres',ok?entity:deviceError(result),ok?'✓':'⚠');});
@@ -222,13 +236,13 @@ function openLight(w){
 }
 function closeLight(){el('lightOverlay').style.display='none';lightEntity='';lastTouch=Date.now();}
 function bindHold(d,w){
- if(!isLightTile(w)&&!isCurtainTile(w))return;
+ if(!isLightTile(w)&&!isCurtainTile(w)&&w.type!=='music')return;
  d.addEventListener('touchstart',function(ev){
    if((pair.active&&pair.editing)||el('lightOverlay').style.display==='flex'||el('curtainOverlay').style.display==='flex')return;
    var t=ev.touches&&ev.touches[0];if(!t)return;
    lightStartX=t.clientX;lightStartY=t.clientY;holdConsumed=false;
    if(holdTimer)clearTimeout(holdTimer);
-   holdTimer=setTimeout(function(){holdConsumed=true;holdTimer=null;if(isCurtainTile(w))openCurtain(w);else openLight(w);},650);
+   holdTimer=setTimeout(function(){holdConsumed=true;holdTimer=null;if(isCurtainTile(w))openCurtain(w);else if(w.type==='music')openMusic(w);else openLight(w);},650);
  },false);
  d.addEventListener('touchmove',function(ev){
    var t=ev.touches&&ev.touches[0];
@@ -237,14 +251,18 @@ function bindHold(d,w){
  function endHold(){if(holdTimer)clearTimeout(holdTimer);holdTimer=null;}
  d.addEventListener('touchend',endHold,false);
  d.addEventListener('touchcancel',endHold,false);
- d.addEventListener('contextmenu',function(ev){ev.preventDefault();if(!(pair.active&&pair.editing)){holdConsumed=true;if(isCurtainTile(w))openCurtain(w);else openLight(w);}},false);
+ d.addEventListener('contextmenu',function(ev){ev.preventDefault();if(!(pair.active&&pair.editing)){holdConsumed=true;if(isCurtainTile(w))openCurtain(w);else if(w.type==='music')openMusic(w);else openLight(w);}},false);
 }
-function renderSlot(i){var w=config.slots[i]||{type:'empty'},e=w.entity||'',st=states[e],html='',n=w.label||'';switch(w.type){case 'clock':html='<span class="ico">◷</span><div><div class="tinyClock"></div><p>'+escape(n||'Ur')+'</p></div>';break;case 'text':html='<span class="ico">✦</span><div><b>'+escape(n||'Tekst')+'</b><p>'+escape(w.value||'')+'</p></div>';break;case 'sensor':html='<span class="ico">◉</span><div><b>'+escape(n||'Sensor')+'</b><div class="value">'+escape(st===undefined?'—':st)+'</div><p>'+escape(e)+'</p></div>';break;case 'button':html='<span class="ico">◉</span><div><b>'+escape(n||'Knap')+'</b><p>'+escape(st===undefined?'Tryk for handling':st)+'</p></div>';break;case 'music':var ms=musicStates[e]||{};html='<span class="ico">♫</span><div><b>'+escape(n||'Musik')+'</b><p>'+escape(ms.title||'Vælg en afspiller')+'</p><p>'+escape(ms.artist||'')+'</p><div class="musicbuttons"><button type="button" data-music="previous">⏮</button><button type="button" data-music="toggle">'+(st==='playing'?'⏸':'▶')+'</button><button type="button" data-music="next">⏭</button></div></div>';break;default:html='<span>＋</span>';}
-var d=document.createElement(w.type==='music'?'div':'button');if(w.type==='music'){d.setAttribute('role','button');d.tabIndex=0;}d.className='slot '+(w.type==='empty'?'empty ':'')+(w.type==='music'?'musicbox':'');d.type='button';d.innerHTML=html;d.onclick=function(ev){if(holdConsumed){holdConsumed=false;return;}if(pair.active&&pair.editing){selectForPhone(i);return;}var action=ev.target.getAttribute('data-music');if(action){musicAction(w,action);return;}if(w.type==='music'){openMusic(w);return;}performTileAction(w,i,ev);};bindHold(d,w);return d;}
+function safeMusicPicture(src){
+ if(typeof src!=='string')return '';
+ return /^\/api\/media_player_proxy\/[a-z0-9_.-]+(?:\?[^\s"'<>]*)?$/.test(src)?src:'';
+}
+function renderSlot(i){var w=config.slots[i]||{type:'empty'},e=w.entity||'',st=states[e],html='',n=w.label||'';switch(w.type){case 'clock':html='<span class="ico">◷</span><div><div class="tinyClock"></div><p>'+escape(n||'Ur')+'</p></div>';break;case 'text':html='<span class="ico">✦</span><div><b>'+escape(n||'Tekst')+'</b><p>'+escape(w.value||'')+'</p></div>';break;case 'sensor':html='<span class="ico">◉</span><div><b>'+escape(n||'Sensor')+'</b><div class="value">'+escape(st===undefined?'—':st)+'</div><p>'+escape(e)+'</p></div>';break;case 'light':case 'switch':case 'cover':html='<span class="ico">'+(w.type==='light'?'💡':w.type==='cover'?'🪟':'🔌')+'</span><div><b>'+escape(n||(w.type==='light'?'Lys':w.type==='cover'?'Gardin':'Kontakt'))+'</b><p>'+escape(st===undefined?'—':st)+'</p></div>';break;case 'button':html='<span class="ico">◉</span><div><b>'+escape(n||'Knap')+'</b><p>'+escape(st===undefined?'Tryk for handling':st)+'</p></div>';break;case 'music':var ms=musicStates[e]||{},art=safeMusicPicture(ms.picture||'');html='<div class="musicArtwork" style="width:52px;height:52px;border-radius:12px;background:rgba(255,255,255,.14);background-position:center;background-size:cover;'+(art?'background-image:url(&quot;'+escape(art)+'&quot;);':'')+'"></div><div><b>'+escape(n||'Musik')+'</b><p>'+escape(ms.title||'Ingen sang')+'</p><p>'+escape(ms.artist||'')+'</p><div class="musicPlayIndicator">'+(st==='playing'?'⏸':'▶')+'</div></div>';break;default:html='<span>＋</span>';}
+var d=document.createElement('button');d.className='slot '+(w.type==='empty'?'empty ':'')+(w.type==='music'?'musicbox':'');d.type='button';d.innerHTML=html;d.onclick=function(ev){if(holdConsumed){holdConsumed=false;return;}if(pair.active&&pair.editing){selectForPhone(i);return;}var action=ev.target.getAttribute('data-music');if(action){musicAction(w,action);return;}performTileAction(w,i,ev);};bindHold(d,w);return d;}
 function draw(){var g=el('grid');g.innerHTML='';for(var i=0;i<6;i++){var cell=renderSlot(i);if(pair.active&&pair.editing&&pair.selected===i)cell.className+=' pair-selected';g.appendChild(cell);}clock();}
 function refreshLiveValues(){var cells=el('grid').children;for(var i=0;i<cells.length&&i<6;i++){var w=config.slots[i]||{},e=w.entity||'',st=states[e],c=cells[i];if(w.type==='sensor'){var v=c.querySelector('.value');if(v)v.textContent=st===undefined?'—':st;}
-else if(w.type==='button'){var p=c.querySelector('p');if(p)p.textContent=st===undefined?'Tryk for handling':st;}
-else if(w.type==='music'){var ms=musicStates[e]||{},ps=c.querySelectorAll('p');if(ps.length>0)ps[0].textContent=ms.title||'Vælg en afspiller';if(ps.length>1)ps[1].textContent=ms.artist||'';var b=c.querySelector('[data-music="toggle"]');if(b)b.textContent=st==='playing'?'⏸':'▶';}
+else if(w.type==='button'||w.type==='light'||w.type==='switch'||w.type==='cover'){var p=c.querySelector('p');if(p)p.textContent=st===undefined?'Tryk for handling':st;}
+else if(w.type==='music'){var ms=musicStates[e]||{},ps=c.querySelectorAll('p');if(ps.length>0)ps[0].textContent=ms.title||'Ingen sang';if(ps.length>1)ps[1].textContent=ms.artist||'';var b=c.querySelector('.musicPlayIndicator');if(b)b.textContent=st==='playing'?'⏸':'▶';var art=c.querySelector('.musicArtwork');if(art){var url=safeMusicPicture(ms.picture||'');art.style.backgroundImage=url?'url("'+url+'")':'none';}}
 }}
 function request(method,path,obj,cb){if(!deviceId||!deviceKey){cb(false,{error:'iPad er ikke godkendt endnu. Forbind den fra telefonen.'});return;}
 var x=new XMLHttpRequest(),p=path,body=obj;
@@ -255,11 +273,11 @@ if(body!==null)x.setRequestHeader('Content-Type','application/json');
 x.onreadystatechange=function(){if(x.readyState===4){var parsed=null;try{parsed=JSON.parse(x.responseText);}catch(e){}cb(x.status>=200&&x.status<300,parsed);}};
 x.onerror=function(){cb(false,null)};x.send(body===null?null:JSON.stringify(body));}
 function runAction(w){if(!w.entity||!w.service){toast('Konfiguration mangler','Udfyld entity ID og service under Rediger.','⚙');return;}var a=w.service.split('.');if(a.length!==2||!(/^[a-z0-9_]+$/.test(a[0])&&/^[a-z0-9_]+$/.test(a[1]))){toast('Ugyldig service','Skriv fx light.toggle.','⚠');return;}request('POST','services/'+a[0]+'/'+a[1],{entity_id:w.entity},function(ok,result){toast(ok?'Handling sendt':'Kunne ikke udføre handling',ok?(w.label||w.entity):deviceError(result),ok?'✓':'⚠');});}
-function openMusic(w){activeMusicWidget=w;el('musicPlayerTitle').textContent=w.label||'Musik';var info=musicStates[w.entity]||{};el('musicNowPlaying').textContent=(info.title||'Ingen sanginfo')+(info.artist?' · '+info.artist:'');el('musicPlayMedia').style.display=w.mediaSource?'block':'none';el('musicFeedback').textContent='Afspiller og sang vælges i telefoneditoren.';el('musicOverlay').style.display='flex';lastTouch=Date.now();}
+function openMusic(w){activeMusicWidget=w;el('musicPlayerTitle').textContent=w.label||'Musik';var info=musicStates[w.entity]||{};var art=safeMusicPicture(info.picture||'');el('musicAlbumArt').style.backgroundImage=art?'url("'+art+'")':'none';var v=typeof info.volume==='number'?Math.round(info.volume*100):50;el('musicVolume').value=v;el('musicVolumeValue').textContent=v+' %';el('musicNowPlaying').textContent=(info.title||'Ingen sanginfo')+(info.artist?' · '+info.artist:'');el('musicPlayMedia').style.display=w.mediaSource?'block':'none';el('musicFeedback').textContent='Afspiller og sang vælges i telefoneditoren.';el('musicOverlay').style.display='flex';lastTouch=Date.now();}
 function closeMusic(){el('musicOverlay').style.display='none';activeMusicWidget=null;lastTouch=Date.now();}
 function playConfiguredMedia(w){if(!w||!w.entity||!w.mediaSource)return;request('POST','services/media_player/play_media',{entity_id:w.entity,media_content_id:w.mediaSource,media_content_type:w.mediaType||'music'},function(ok){el('musicFeedback').textContent=ok?'✓ Afspilning sendt':'Kunne ikke afspille. Tjek at medieafspilleren understøtter dette medielink.';});}
 function musicAction(w,a){if(!w.entity){toast('Vælg en afspiller','Vælg en afspiller via telefonen.','♫');return;}var service=a==='previous'?'media_previous_track':a==='next'?'media_next_track':'media_play_pause';request('POST','services/media_player/'+service,{entity_id:w.entity},function(ok,result){toast(ok?'Musik opdateret':'Musik kunne ikke styres',ok?(w.label||'Afspiller'):deviceError(result),'♫');});}
-function readStates(){if(!deviceKey||polling||document.hidden)return;polling=true;request('GET','states',null,function(ok,result){polling=false;if(!ok||!result){toast('Home Assistant',deviceError(result),'⚠');return;}var next={};for(var i=0;i<result.length;i++){next[result[i].entity_id]=result[i].state;if(result[i].entity_id.indexOf('media_player.')===0){var a=result[i].attributes||{};musicStates[result[i].entity_id]={title:a.media_title||'',artist:a.media_artist||'',source:a.source||''};}}if(baseline){for(var j=0;j<config.rules.length;j++){var r=config.rules[j];if(Object.prototype.hasOwnProperty.call(states,r.entity)&&states[r.entity]!==next[r.entity]&&next[r.entity]===r.state)notificationToast(r.title,r.body||'',r.emoji||'🔔');}}states=next;baseline=true;if(screen==='dashboard')refreshLiveValues();});}
+function readStates(){if(!deviceKey||polling||document.hidden)return;polling=true;request('GET','states',null,function(ok,result){polling=false;if(!ok||!result){toast('Home Assistant',deviceError(result),'⚠');return;}var next={};for(var i=0;i<result.length;i++){next[result[i].entity_id]=result[i].state;if(result[i].entity_id.indexOf('media_player.')===0){var a=result[i].attributes||{};musicStates[result[i].entity_id]={title:a.media_title||'',artist:a.media_artist||'',source:a.source||'',picture:a.entity_picture||'',volume:a.volume_level};}}if(baseline){for(var j=0;j<config.rules.length;j++){var r=config.rules[j];if(Object.prototype.hasOwnProperty.call(states,r.entity)&&states[r.entity]!==next[r.entity]&&next[r.entity]===r.state)notificationToast(r.title,r.body||'',r.emoji||'🔔');}}states=next;baseline=true;if(screen==='dashboard')refreshLiveValues();});}
 var nature=[
 'https://images.unsplash.com/photo-1470770841072-f978cf4d019e?w=1300&q=75',
 'https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=1300&q=75',
@@ -361,6 +379,8 @@ el('musicOverlay').onclick=function(e){if(e.target===el('musicOverlay'))closeMus
 el('musicPrev').onclick=function(){if(activeMusicWidget)musicAction(activeMusicWidget,'previous');};
 el('musicToggle').onclick=function(){if(activeMusicWidget)musicAction(activeMusicWidget,'toggle');};
 el('musicNext').onclick=function(){if(activeMusicWidget)musicAction(activeMusicWidget,'next');};
+el('musicVolume').oninput=function(){el('musicVolumeValue').textContent=this.value+' %';};
+el('musicVolumeApply').onclick=function(){if(!activeMusicWidget)return;var v=Number(el('musicVolume').value)/100;request('POST','services/media_player/volume_set',{entity_id:activeMusicWidget.entity,volume_level:v},function(ok,r){el('musicFeedback').textContent=ok?'✓ Lydstyrke indstillet':deviceError(r);});};
 el('musicPlayMedia').onclick=function(){if(activeMusicWidget)playConfiguredMedia(activeMusicWidget);};
 el('sleepBtn').onclick=function(){setScreen('saver');};
 el('soundBtn').onclick=function(){unlockNotificationAudio();playNotificationSound();toast('Notifikationslyd','Lydtest. Hvis du hører et ding, er lyden aktiveret i Safari.','🔊');};
