@@ -2,18 +2,24 @@
   "config": {
     "step": {
       "user": {
-        "title": "Liquid Home",
-        "description": "Opret en kode med mindst 12 tegn til at godkende din iPad fra telefonen. Du behøver ikke et Home Assistant adgangstoken.",
-        "data": {
-          "pairing_pin": "Parringskode (mindst 12 tegn)"
-        }
+        "title": "Liquid Home – automatisk parringskode",
+        "description": "Liquid Home har genereret din personlige parringskode:\n\n**{pairing_code}**\n\nGem koden et sikkert sted. Du skal kun skrive den én gang på telefonen, efter du har scannet QR koden på iPad'en. Tryk Send for at aktivere integrationen.",
+        "data": {}
       }
-    },
-    "error": {
-      "pin_too_short": "Koden skal være mindst 12 tegn"
     },
     "abort": {
       "single_instance_allowed": "Liquid Home er allerede installeret"
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Liquid Home – parringskode",
+        "description": "Din nuværende parringskode:\n\n**{pairing_code}**\n\nDu kan lade den være uændret eller vælge at generere en ny. Bemærk: En ny kode bruges til fremtidige parringer; allerede parrede iPads skal afbrydes særskilt, hvis de ikke længere skal have adgang.",
+        "data": {
+          "regenerate": "Generér en ny parringskode"
+        }
+      }
     }
   }
 }
