@@ -115,17 +115,28 @@ function refreshEntityList(){
  });
 }
 function populateEntitySelect(current){
- var select=el('entitySelect'),filter=el('deviceFilter').value,term=(el('entitySearch').value||'').toLocaleLowerCase().trim();select.innerHTML='';
- var placeholder=document.createElement('option');placeholder.value='';placeholder.textContent='— Vælg en enhed —';select.appendChild(placeholder);
- var known=false;
+ var select=el('entitySelect'),kind=el('kind').value,term=(el('entitySearch').value||'').toLocaleLowerCase().trim();
+ var allowed={light:['light'],switch:['switch','input_boolean','fan'],cover:['cover'],music:['media_player'],sensor:['sensor','binary_sensor','climate']};
+ var domains=allowed[kind]||[];
+ var previous=typeof current==='string'?current:(select.value||'');
+ select.innerHTML='';
+ var placeholder=document.createElement('option');placeholder.value='';placeholder.textContent='— Vælg en Home Assistant enhed —';select.appendChild(placeholder);
+ var count=0,selectedFound=false,available=0;
  for(var i=0;i<availableEntities.length;i++){
-  var e=availableEntities[i];var recognized=['light','cover','media_player','switch','sensor'];
-  if(filter!=='all'&&!(filter==='other'&&recognized.indexOf(e.domain)===-1)&&e.domain!==filter&&!(filter==='switch'&&['fan','input_boolean'].indexOf(e.domain)>=0)&&!(filter==='sensor'&&['binary_sensor','climate'].indexOf(e.domain)>=0))continue;
+  var e=availableEntities[i];
+  if(domains.length&&domains.indexOf(e.domain)<0)continue;
+  available++;
   if(term&&(e.name+' '+e.id+' '+e.domain).toLocaleLowerCase().indexOf(term)===-1)continue;
-  var o=document.createElement('option');o.value=e.id;o.textContent=e.name+' ('+e.id+')';select.appendChild(o);if(e.id===current)known=true;
+  var option=document.createElement('option');option.value=e.id;option.textContent=e.name+' ('+e.id+')';select.appendChild(option);count++;
+  if(e.id===previous)selectedFound=true;
  }
- if(current&&!known){var extra=document.createElement('option');extra.value=current;extra.textContent=current+' (valgt)';select.appendChild(extra);}
- select.value=current||'';
+ // Preserve an old selection only when it belongs to the selected type.
+ if(previous&&selectedFound)select.value=previous;else select.value='';
+ if(!count){
+  placeholder.textContent=available?(term?'Ingen træffere – ryd søgningen.':'Ingen enheder fundet.'):
+   (availableEntities.length?'Ingen enheder af denne type. Prøv en anden type.':'Hent enheder fra Home Assistant.');
+ }
+ el('entityStatus').textContent=availableEntities.length+' Home Assistant enheder indlæst · '+count+' matcher '+(kind||'valgt type')+'.';
 }
 function populateRuleSelect(){
  var select=el('ruleEntitySelect'),current=select.value||el('ruleEntity').value,term=(el('ruleSearch').value||'').toLocaleLowerCase().trim();
@@ -153,11 +164,11 @@ function updateKindUI(){
  el('kindHelp').textContent=descriptions[kind]||'';
  populateEntitySelect(el('entity').value);
 }
-el('kind').onchange=updateKindUI;
+el('kind').onchange=function(){el('entitySearch').value='';el('entity').value='';el('entitySelect').value='';el('label').value='';updateKindUI();};
 function inferQuick(w){if(!w)return 'toggle';if(w.type==='music')return 'music';if(w.type==='sensor')return 'sensor';if(w.actionType==='none'||w.type==='text'||w.type==='clock'||w.type==='empty')return 'none';if(w.actionType==='service'||w.actionType==='url'||w.actionType==='qr'||w.actionType==='saver')return 'advanced';return 'toggle';}
 el('loadEntities').onclick=refreshEntityList;
-el('deviceFilter').onchange=function(){populateEntitySelect(el('entity').value)};
-el('entitySearch').oninput=function(){populateEntitySelect(el('entity').value)};
+el('deviceFilter').onchange=function(){el('entitySearch').value='';populateEntitySelect(el('entity').value);};
+el('entitySearch').oninput=function(){populateEntitySelect(el('entity').value);};
 el('entitySelect').onchange=function(){el('entity').value=this.value;var o=this.options[this.selectedIndex];if(o&&o.value&&!el('label').value.trim())el('label').value=o.textContent.replace(/ \([^)]*\)$/,'');};
 el('quickAction').onchange=syncQuickAction;
 el('resetSetup').onclick=function(){
