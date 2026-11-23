@@ -34,7 +34,15 @@ button{-webkit-transition:opacity .18s ease,-webkit-transform .18s ease;transiti
 <label for="ruleSearch">Søg efter sensor eller enhed</label><input id="ruleSearch" type="search" placeholder="Fx hoveddør, bevægelse eller temperatur" autocomplete="off">
 <label for="ruleEntitySelect">Vælg enhed til notifikation</label><select id="ruleEntitySelect"><option value="">— Hent enheder fra Home Assistant —</option></select>
 <details><summary class="muted">Avanceret: Angiv entity ID manuelt</summary><input id="ruleEntity" placeholder="binary_sensor.hoveddor" autocapitalize="none"></details>
-<label>Tilstand</label><input id="ruleState" value="on" autocapitalize="none">
+<label for="ruleEmoji">Emoji til notifikationen</label>
+ <select id="ruleEmoji">
+ <option value="🔔">🔔 Klokke</option><option value="🚪">🚪 Dør</option><option value="🔓">🔓 Åben</option><option value="🔒">🔒 Låst</option>
+ <option value="💡">💡 Lys</option><option value="🏠">🏠 Hjem</option><option value="👤">👤 Bevægelse</option><option value="📦">📦 Pakke</option>
+ <option value="🌡️">🌡️ Temperatur</option><option value="💧">💧 Vand</option><option value="🔥">🔥 Brand</option><option value="⚠️">⚠️ Advarsel</option>
+ <option value="🪟">🪟 Vindue</option><option value="🐕">🐕 Hund</option><option value="✅">✅ OK</option><option value="❌">❌ Fejl</option>
+ <option value="🎵">🎵 Musik</option><option value="🔋">🔋 Batteri</option><option value="📱">📱 Telefon</option><option value="🚨">🚨 Alarm</option>
+ </select>
+ <label>Tilstand</label><input id="ruleState" value="on" autocapitalize="none">
 <label>Overskrift</label><input id="ruleTitle" placeholder="Døren er åbnet">
 <label>Beskrivelse</label><input id="ruleBody" placeholder="Hoveddøren blev åbnet">
 <button id="addRulePhone" type="button">Tilføj regel</button><button id="testRulePhone" type="button">Vis test på iPad</button>
@@ -151,9 +159,9 @@ var naturePhotos=[
  'https://images.unsplash.com/photo-1501785888041-af3ef285b470?w=1100&q=70',
  'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=1100&q=70'];
 function saveChange(data,id,cb){if(closed)return;req('POST','/api/liquid_home/update/'+encodeURIComponent(sid),Object.assign({key:key},data),function(ok,r){el(id).textContent=ok?'✓ Gemt på iPad':(r.error||'Kunne gemme');if(cb)cb(ok,r);});}
-function renderRulesPhone(){var box=el('rulesList');box.innerHTML='';localRules.forEach(function(rule,i){var div=document.createElement('div');div.className='muted';div.textContent=rule.title+' · '+rule.entity+' = '+rule.state+' ';var del=document.createElement('button');del.textContent='Slet';del.type='button';del.onclick=function(){localRules.splice(i,1);renderRulesPhone();saveChange({rules:localRules},'rulesMessage');};div.appendChild(del);box.appendChild(div);});}
-el('addRulePhone').onclick=function(){var r={entity:(el('ruleEntitySelect').value||el('ruleEntity').value).trim(),state:el('ruleState').value.trim(),title:el('ruleTitle').value.trim(),body:el('ruleBody').value.trim()};if(!r.entity||!r.state||!r.title){el('rulesMessage').textContent='Udfyld entity, tilstand og titel';return;}localRules.push(r);renderRulesPhone();saveChange({rules:localRules},'rulesMessage');};
-el('testRulePhone').onclick=function(){saveChange({test_notification:{title:'Test fra telefonen',body:'Sådan ser notifikationer ud.'}},'rulesMessage');};
+function renderRulesPhone(){var box=el('rulesList');box.innerHTML='';localRules.forEach(function(rule,i){var div=document.createElement('div');div.className='muted';div.textContent=(rule.emoji||'🔔')+' '+rule.title+' · '+rule.entity+' = '+rule.state+' ';var del=document.createElement('button');del.textContent='Slet';del.type='button';del.onclick=function(){localRules.splice(i,1);renderRulesPhone();saveChange({rules:localRules},'rulesMessage');};div.appendChild(del);box.appendChild(div);});}
+el('addRulePhone').onclick=function(){var r={entity:(el('ruleEntitySelect').value||el('ruleEntity').value).trim(),state:el('ruleState').value.trim(),title:el('ruleTitle').value.trim(),body:el('ruleBody').value.trim(),emoji:el('ruleEmoji').value||'🔔'};if(!r.entity||!r.state||!r.title){el('rulesMessage').textContent='Udfyld entity, tilstand og titel';return;}localRules.push(r);renderRulesPhone();saveChange({rules:localRules},'rulesMessage');};
+el('testRulePhone').onclick=function(){saveChange({test_notification:{title:'Test fra telefonen',body:'Sådan ser notifikationer ud.',emoji:el('ruleEmoji').value||'🔔'}},'rulesMessage');};
 el('saveIdlePhone').onclick=function(){saveChange({idle:Math.max(0,Math.min(120,Number(el('idlePhone').value)||0))},'idleMessage');};
 function sendBg(data){saveChange({background:data},'backgroundMessage');}
 el('clearPhoto').onclick=function(){sendBg('');};
