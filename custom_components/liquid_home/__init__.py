@@ -475,7 +475,15 @@ async def async_setup_entry(hass, entry) -> bool:
     hass.http.register_view(PairEntities(store, hass))
     hass.http.register_view(PairSelect(store))
     hass.http.register_view(PairUpdate(store, devices, storage))
-    hass.http.register_view(PairAuthorize(store, devices, storage, pin))
+    authorize_view = PairAuthorize(store, devices, storage, pin)
+    hass.http.register_view(authorize_view)
+
+    async def _update_pairing_code(hass, updated_entry):
+        candidate = updated_entry.options.get("pairing_pin", updated_entry.data.get("pairing_pin", ""))
+        if isinstance(candidate, str) and len(candidate) >= 12:
+            authorize_view.pin = candidate
+
+    entry.async_on_unload(entry.add_update_listener(_update_pairing_code))
     hass.http.register_view(DeviceProxy(hass, devices))
     hass.data[DOMAIN] = {"registered": True}
     return True
