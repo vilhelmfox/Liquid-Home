@@ -87,7 +87,7 @@ button{-webkit-transition:opacity .18s ease,-webkit-transform .18s ease;transiti
 (function(){'use strict';
 function el(x){return document.getElementById(x)}
 function qp(name){var m=new RegExp('[?&]'+name+'=([^&]+)').exec(location.search);return m?decodeURIComponent(m[1]):''}
-var sid=qp('sid'),key=qp('key'),selected=-1,busy=false,closed=false,wizardStep=0,wizardStarted=false,wizardBg='nature',entitiesLoaded=false,entitiesLoading=false,sessionAuthorized=false;
+var sid=qp('sid'),key=qp('key'),selected=-1,busy=false,closed=false,wizardStep=0,wizardStarted=false,wizardBg='nature',entitiesLoaded=false,entitiesLoading=false,entitiesAttempted=false,sessionAuthorized=false;
 function req(method,url,data,cb){var x=new XMLHttpRequest();x.open(method,url,true);if(data!==null)x.setRequestHeader('Content-Type','application/json');x.onreadystatechange=function(){if(x.readyState===4){var r={};try{r=JSON.parse(x.responseText)}catch(e){}cb(x.status>=200&&x.status<300,r,x.status)}};x.onerror=function(){cb(false,{error:'Netværksfejl'},0)};x.send(data===null?null:JSON.stringify(data))}
 function showWizardStep(n){wizardStep=n;var arr=el('wizard').querySelectorAll('.step');for(var i=0;i<arr.length;i++)arr[i].className='step'+(i===n?' active':'');el('wizardProgress').textContent='TRIN '+(n+1)+' AF 4';el('wizardBack').style.visibility=n===0?'hidden':'visible';el('wizardNext').textContent=n===3?'Færdig':'Fortsæt';}
 function startWizard(){if(wizardStarted)return;wizardStarted=true;el('wizard').style.display='block';showWizardStep(0);}
@@ -102,7 +102,7 @@ var wizardUploaded=false;
 function uploadFile(input,message,done){var f=input.files&&input.files[0];if(!f){el(message).textContent='Vælg et billede først';return;}var reader=new FileReader();reader.onload=function(){var im=new Image();im.onload=function(){compressImage(im,function(data){saveChange({background:data},message,function(ok){if(ok){wizardUploaded=true;if(done)done();}});});};im.onerror=function(){el(message).textContent='Billedet kunne ikke læses';};im.src=reader.result;};reader.readAsDataURL(f);}
 function poll(){if(busy||closed)return;busy=true;req('GET','/api/liquid_home/state/'+encodeURIComponent(sid)+'?key='+encodeURIComponent(key),null,function(ok,r){busy=false;if(!ok){el('status').textContent='Forbindelsen er afbrudt';el('message').textContent=r.error||'Prøv at scanne en ny QR kode';el('form').style.display='none';closed=true;return;}el('status').textContent='Forbundet til iPad';
 sessionAuthorized=r.authorized===true;
-if(sessionAuthorized&&!entitiesLoaded&&!entitiesLoading)refreshEntityList();
+if(sessionAuthorized&&!entitiesLoaded&&!entitiesLoading&&!entitiesAttempted)refreshEntityList();
 if(!sessionAuthorized&&!entitiesLoading){
  el('entityStatus').textContent='Forbind først Home Assistant: indtast den automatisk genererede Liquid Home parringskode under “Forbind til Home Assistant” ovenfor. Derefter hentes enhederne automatisk.';
 }
@@ -117,7 +117,7 @@ function refreshEntityList(){
   el('entityStatus').textContent='Godkend først forbindelsen med din Liquid Home parringskode i afsnittet “Forbind til Home Assistant”.';
   return;
  }
- entitiesLoading=true;
+ entitiesLoading=true;entitiesAttempted=true;
  el('entityStatus').textContent='Henter enheder fra Home Assistant …';
  req('GET','/api/liquid_home/entities/'+encodeURIComponent(sid)+'?key='+encodeURIComponent(key),null,function(ok,r,httpStatus){
    entitiesLoading=false;
@@ -190,7 +190,7 @@ function updateKindUI(){
 }
 el('kind').onchange=function(){el('entitySearch').value='';el('entity').value='';el('entitySelect').value='';el('label').value='';updateKindUI();};
 function inferQuick(w){if(!w)return 'toggle';if(w.type==='music')return 'music';if(w.type==='sensor')return 'sensor';if(w.actionType==='none'||w.type==='text'||w.type==='clock'||w.type==='empty')return 'none';if(w.actionType==='service'||w.actionType==='url'||w.actionType==='qr'||w.actionType==='saver')return 'advanced';return 'toggle';}
-el('loadEntities').onclick=function(){entitiesLoaded=false;refreshEntityList();};
+el('loadEntities').onclick=function(){entitiesLoaded=false;entitiesAttempted=false;refreshEntityList();};
 el('deviceFilter').onchange=function(){el('entitySearch').value='';populateEntitySelect(el('entity').value);};
 el('entitySearch').oninput=function(){populateEntitySelect(el('entity').value);};
 el('entitySelect').onchange=function(){el('entity').value=this.value;var o=this.options[this.selectedIndex];if(o&&o.value&&!el('label').value.trim())el('label').value=o.textContent.replace(/ \([^)]*\)$/,'');};
@@ -225,7 +225,7 @@ function authorizePhone(pin,target){
  if(pin.length<12){el(target).textContent='Adgangskoden skal være mindst 12 tegn.';return;}
  req('POST','/api/liquid_home/authorize/'+encodeURIComponent(sid),{key:key,pin:pin},function(ok,r){
  el(target).textContent=ok?'✓ Home Assistant er forbundet!':'Kunne ikke forbinde: '+(r.error||'Fejl');
- if(ok){sessionAuthorized=true;entitiesLoaded=false;el('haTokenPhone').value='';el('wizardToken').value='';refreshEntityList();}
+ if(ok){sessionAuthorized=true;entitiesLoaded=false;entitiesAttempted=false;el('haTokenPhone').value='';el('wizardToken').value='';refreshEntityList();}
  });
 }
 el('connectPhone').onclick=function(){authorizePhone(el('haTokenPhone').value.trim(),'connectionMessage');};
