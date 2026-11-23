@@ -1,4 +1,6 @@
-# Liquid Home v2.0.2 – rettet godkendelse af enhedslisten
+# Liquid Home v2.0.3 – rettet gemning af lys og gardiner
+
+**Rettet i v2.0.3:** Lys, kontakter og gardiner gemmes nu i et format, som både nye og ældre Liquid Home serverversioner forstår. Fejlen **Ukendt widgettype** ved valg af f.eks. Gardin undgås dermed. Hvis Home Assistant stadig bruger gammel kode efter en HACS opdatering, skal du genstarte Home Assistant for at indlæse Python ændringer.
 
 **Rettet i v2.0.2:** Telefoneditoren kontrollerer nu, om QR sessionen er godkendt med Liquid Home parringskoden, inden enhederne hentes. Efter godkendelse hentes enheder automatisk. Hvis HA afviser adgang, vises den faktiske fejl og HTTP status frem for en misvisende genstartsbesked. Hver ny QR session skal stadig godkendes med parringskoden.
 
